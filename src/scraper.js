@@ -81,12 +81,24 @@ class SoleronScraper {
   async navigateToPlant() {
     console.log('Navigating to plant 290...');
     try {
+      // Simply navigate to the URL (reuses existing logged-in page)
       await this.page.goto('https://app.soleronenergy.com/#/plants/290', {
         waitUntil: 'networkidle2',
         timeout: 30000
+      }).catch(async (err) => {
+        // If page is detached, create new one and re-login
+        console.log('Page detached, creating new page and re-logging in...');
+        this.page = await this.browser.newPage();
+        await this.page.setViewport({ width: 1920, height: 1080 });
+        this.isLoggedIn = false;
+        await this.login();
+        await this.page.goto('https://app.soleronenergy.com/#/plants/290', {
+          waitUntil: 'networkidle2',
+          timeout: 30000
+        });
       });
 
-      // Wait for page to load (Angular app) - wait longer
+      // Wait for page to load (Angular app)
       await new Promise(resolve => setTimeout(resolve, 5000));
       console.log('Navigated to plant page');
     } catch (error) {
