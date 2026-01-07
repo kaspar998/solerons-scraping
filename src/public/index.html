@@ -330,14 +330,24 @@
 
             .top-card {
                 width: 100%;
-                max-width: 200px;
-                min-height: 80px;
+                max-width: 180px;
+                min-height: 70px;
+            }
+
+            .flow-container {
+                justify-content: center;
+                /* Center items instead of space-between */
+                gap: 20px;
+                /* Smaller fixed gap for lines */
+                flex: 0 1 auto;
+                /* Don't force to fill screen if not needed */
             }
 
             .bottom-row {
                 grid-template-columns: repeat(4, 1fr);
                 gap: 5px;
-                margin-top: 20px;
+                margin-top: 0;
+                /* Let flex gap handle it */
             }
 
             .extras-row {
