@@ -1,0 +1,363 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Soleron Energy Monitor</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 30px;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 8px 16px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 20px;
+            font-size: 0.9em;
+        }
+
+        .status.online {
+            background: rgba(76, 175, 80, 0.3);
+        }
+
+        .status.offline {
+            background: rgba(244, 67, 54, 0.3);
+        }
+
+        .grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 20px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 24px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .card h2 {
+            color: #333;
+            margin-bottom: 16px;
+            font-size: 1.3em;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .card-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+        }
+
+        .solar-card .card-icon { background: #ffd54f; }
+        .grid-card .card-icon { background: #64b5f6; }
+        .battery-card .card-icon { background: #81c784; }
+        .car-card .card-icon { background: #ba68c8; }
+        .consumption-card .card-icon { background: #ff8a65; }
+        .mfrr-card .card-icon { background: #4db6ac; }
+
+        .data-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 0;
+            border-bottom: 1px solid #f0f0f0;
+        }
+
+        .data-row:last-child {
+            border-bottom: none;
+        }
+
+        .data-label {
+            font-size: 0.9em;
+            color: #666;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .data-value {
+            font-size: 1.3em;
+            font-weight: bold;
+            color: #333;
+        }
+
+        .status-badge {
+            display: inline-block;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.85em;
+            font-weight: 600;
+        }
+
+        .status-idle { background: #e0e0e0; color: #666; }
+        .status-buying { background: #ffcdd2; color: #c62828; }
+        .status-selling { background: #c8e6c9; color: #2e7d32; }
+        .status-charging { background: #fff9c4; color: #f57f17; }
+        .status-discharging { background: #b2dfdb; color: #00695c; }
+        .status-producing { background: #c8e6c9; color: #2e7d32; }
+        .status-active { background: #bbdefb; color: #1565c0; }
+
+        .timestamp {
+            text-align: center;
+            color: white;
+            font-size: 0.9em;
+            margin-top: 20px;
+            opacity: 0.9;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: white;
+        }
+
+        .error {
+            background: #ffebee;
+            color: #c62828;
+            padding: 16px;
+            border-radius: 8px;
+            border-left: 4px solid #c62828;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .loading {
+            animation: pulse 1.5s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Soleron Energy Monitor</h1>
+            <div class="status" id="status">Connecting...</div>
+        </div>
+
+        <div id="content" class="loading">Loading data...</div>
+
+        <div class="timestamp" id="timestamp"></div>
+    </div>
+
+    <script>
+        let lastUpdate = null;
+
+        async function fetchEnergyData() {
+            try {
+                const response = await fetch('/api/energy');
+                const result = await response.json();
+
+                if (result.success) {
+                    updateStatus('online');
+                    displayData(result.data);
+                    lastUpdate = new Date(result.lastUpdate);
+                    updateTimestamp();
+                } else {
+                    updateStatus('offline');
+                    showError(result.message || 'Failed to fetch data');
+                }
+            } catch (error) {
+                updateStatus('offline');
+                showError('Connection error: ' + error.message);
+            }
+        }
+
+        function updateStatus(status) {
+            const statusEl = document.getElementById('status');
+            if (status === 'online') {
+                statusEl.textContent = 'Online';
+                statusEl.className = 'status online';
+            } else {
+                statusEl.textContent = 'Offline';
+                statusEl.className = 'status offline';
+            }
+        }
+
+        function getStatusClass(status) {
+            if (!status) return 'status-idle';
+            const s = status.toLowerCase();
+            if (s.includes('idle')) return 'status-idle';
+            if (s.includes('buying')) return 'status-buying';
+            if (s.includes('selling')) return 'status-selling';
+            if (s.includes('charging')) return 'status-charging';
+            if (s.includes('discharging')) return 'status-discharging';
+            if (s.includes('producing')) return 'status-producing';
+            if (s.includes('active')) return 'status-active';
+            return 'status-idle';
+        }
+
+        function formatLoad(load) {
+            if (load === null || load === undefined) return 'N/A';
+            return load.toLocaleString() + ' W';
+        }
+
+        function displayData(data) {
+            const contentEl = document.getElementById('content');
+
+            if (!data) {
+                contentEl.innerHTML = '<div class="loading">No data available</div>';
+                return;
+            }
+
+            const html = `
+                <div class="grid-container">
+                    <!-- Solar Card -->
+                    <div class="card solar-card">
+                        <h2>
+                            <div class="card-icon">☀️</div>
+                            Solar
+                        </h2>
+                        <div class="data-row">
+                            <span class="data-label">Load</span>
+                            <span class="data-value">${formatLoad(data.solar?.load)}</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Status</span>
+                            <span class="status-badge ${getStatusClass(data.solar?.status)}">${data.solar?.status || 'N/A'}</span>
+                        </div>
+                    </div>
+
+                    <!-- Grid Card -->
+                    <div class="card grid-card">
+                        <h2>
+                            <div class="card-icon">⚡</div>
+                            Grid
+                        </h2>
+                        <div class="data-row">
+                            <span class="data-label">Load</span>
+                            <span class="data-value">${formatLoad(data.grid?.load)}</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Status</span>
+                            <span class="status-badge ${getStatusClass(data.grid?.status)}">${data.grid?.status || 'N/A'}</span>
+                        </div>
+                    </div>
+
+                    <!-- Battery Card -->
+                    <div class="card battery-card">
+                        <h2>
+                            <div class="card-icon">🔋</div>
+                            Battery
+                        </h2>
+                        <div class="data-row">
+                            <span class="data-label">Load</span>
+                            <span class="data-value">${formatLoad(data.battery?.load)}</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">SoC</span>
+                            <span class="data-value">${data.battery?.soc !== null ? data.battery.soc + '%' : 'N/A'}</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Status</span>
+                            <span class="status-badge ${getStatusClass(data.battery?.status)}">${data.battery?.status || 'N/A'}</span>
+                        </div>
+                    </div>
+
+                    <!-- Car Card -->
+                    <div class="card car-card">
+                        <h2>
+                            <div class="card-icon">🚗</div>
+                            Car
+                        </h2>
+                        <div class="data-row">
+                            <span class="data-label">Load</span>
+                            <span class="data-value">${formatLoad(data.car?.load)}</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Status</span>
+                            <span class="status-badge ${getStatusClass(data.car?.status)}">${data.car?.status || 'N/A'}</span>
+                        </div>
+                    </div>
+
+                    <!-- Consumption Card -->
+                    <div class="card consumption-card">
+                        <h2>
+                            <div class="card-icon">📊</div>
+                            Consumption
+                        </h2>
+                        <div class="data-row">
+                            <span class="data-label">Load</span>
+                            <span class="data-value">${formatLoad(data.consumption?.load)}</span>
+                        </div>
+                        <div class="data-row">
+                            <span class="data-label">Status</span>
+                            <span class="status-badge ${getStatusClass(data.consumption?.status)}">${data.consumption?.status || 'N/A'}</span>
+                        </div>
+                    </div>
+
+                    <!-- mFRR Card -->
+                    <div class="card mfrr-card">
+                        <h2>
+                            <div class="card-icon">💰</div>
+                            mFRR
+                        </h2>
+                        <div class="data-row">
+                            <span class="data-label">Value</span>
+                            <span class="data-value">${data.mfrr !== null ? data.mfrr.toFixed(2) + ' €' : 'N/A'}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            contentEl.innerHTML = html;
+        }
+
+        function updateTimestamp() {
+            if (lastUpdate) {
+                document.getElementById('timestamp').textContent =
+                    'Last updated: ' + lastUpdate.toLocaleString();
+            }
+        }
+
+        function showError(message) {
+            const contentEl = document.getElementById('content');
+            contentEl.innerHTML = `
+                <div class="error">
+                    <strong>Error:</strong> ${message}
+                </div>
+            `;
+        }
+
+        // Initial fetch
+        fetchEnergyData();
+
+        // Auto-refresh every 30 seconds
+        setInterval(fetchEnergyData, 30000);
+    </script>
+</body>
+</html>
