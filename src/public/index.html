@@ -1,9 +1,11 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Soleron Energy Monitor</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
         * {
             margin: 0;
@@ -12,572 +14,498 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: #f5f7fa;
-            min-height: 100vh;
-            padding: 10px;
-            overflow-x: hidden;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: #f0f2f5;
+            height: 100vh;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+            color: #1a1a1a;
+            padding: 2vh;
         }
 
         .container {
-            max-width: 100%;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 1200px;
+            width: 100%;
             margin: 0 auto;
+            height: 100%;
         }
 
         .header {
-            text-align: center;
-            color: #2c3e50;
-            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 2vh;
+            padding: 0 10px;
         }
 
         .header h1 {
-            font-size: 1.4em;
-            margin-bottom: 5px;
-            font-weight: 600;
-        }
-
-        .status {
-            display: inline-block;
-            padding: 4px 10px;
-            background: #e0e0e0;
-            border-radius: 12px;
-            font-size: 0.75em;
-            color: #666;
-            font-weight: 600;
-        }
-
-        .status.online {
-            background: #4caf50;
-            color: white;
-        }
-
-        .status.offline {
-            background: #f44336;
-            color: white;
-        }
-
-        .flow-diagram {
-            position: relative;
-            max-width: 100%;
-            margin: 0 auto;
-            padding: 10px;
-        }
-
-        .top-section {
-            display: flex;
-            justify-content: center;
-            margin-bottom: 70px;
-            position: relative;
-            z-index: 2;
-        }
-
-        .bottom-section {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 15px;
-            max-width: 100%;
-            margin: 0 auto;
-            position: relative;
-            z-index: 2;
-        }
-
-        .connection-lines {
-            position: absolute;
-            top: 90px;
-            left: 0;
-            right: 0;
-            width: 100%;
-            height: 100px;
-            pointer-events: none;
-            z-index: 1;
-        }
-
-        .section-title {
-            color: #5a6c7d;
-            font-size: 0.9em;
-            font-weight: 600;
-            text-align: center;
-            margin: 15px 0 10px 0;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .extras-section {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 10px;
-            max-width: 100%;
-            margin: 0 auto;
-        }
-
-        .card {
-            background: white;
-            border-radius: 8px;
-            padding: 12px;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
-            border: 1px solid #e1e8ed;
-            position: relative;
-            z-index: 2;
-            transition: transform 0.2s, box-shadow 0.2s;
-        }
-
-        .card:hover {
-            transform: translateY(-1px);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.12);
-        }
-
-        .card.top-card {
-            min-width: 280px;
-            max-width: 300px;
-            padding: 16px;
-        }
-
-        .card h2 {
-            color: #5a6c7d;
-            margin-bottom: 10px;
-            font-size: 0.75em;
-            font-weight: 600;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-        }
-
-        .card.top-card h2 {
-            font-size: 0.95em;
-        }
-
-        .card-icon {
-            width: 24px;
-            height: 24px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.1em;
-        }
-
-        .top-card .card-icon {
-            width: 32px;
-            height: 32px;
-            font-size: 1.5em;
-        }
-
-        .extras-section .card {
-            padding: 10px;
-        }
-
-        .extras-section .card h2 {
-            font-size: 0.65em;
-            margin-bottom: 8px;
-        }
-
-        .extras-section .card-icon {
-            width: 20px;
-            height: 20px;
-            font-size: 0.9em;
-        }
-
-        .data-row {
-            margin-bottom: 8px;
-        }
-
-        .data-row:last-child {
-            margin-bottom: 0;
-        }
-
-        .data-label {
-            font-size: 0.65em;
-            color: #8899a6;
-            margin-bottom: 2px;
-            font-weight: 500;
-        }
-
-        .data-value {
-            font-size: 1.2em;
+            font-size: 1.5rem;
             font-weight: 700;
-            color: #14171a;
+            color: #2d3748;
+        }
+
+        .status-pill {
+            display: inline-flex;
+            align-items: center;
+            padding: 6px 16px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            background: #e2e8f0;
+            color: #64748b;
+            transition: all 0.3s ease;
+        }
+
+        .status-pill.online {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .status-pill.offline {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
+        .main-display {
+            flex: 1;
             display: flex;
-            align-items: baseline;
-            gap: 4px;
+            flex-direction: column;
+            position: relative;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            padding: 3vh;
+            margin-bottom: 2vh;
         }
 
-        .top-card .data-value {
-            font-size: 1.8em;
+        .flow-container {
+            flex: 2;
+            display: flex;
+            flex-direction: column;
+            position: relative;
+            justify-content: space-between;
+            /* padding: 2vh 0; */
         }
 
-        .extras-section .data-value {
-            font-size: 1em;
+        .top-row {
+            display: flex;
+            justify-content: center;
+            z-index: 2;
         }
 
-        .data-value .unit {
-            font-size: 0.5em;
-            color: #8899a6;
+        .bottom-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+            z-index: 2;
+            margin-top: auto;
+            /* Push to bottom of flow container */
+        }
+
+        /* SVG Lines Layer */
+        .lines-layer {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        .data-card {
+            background: white;
+            border-radius: 16px;
+            border: 1px solid #e2e8f0;
+            padding: 1.5vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
+            z-index: 2;
+            min-height: 120px;
+        }
+
+        .data-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            border-color: #cbd5e1;
+        }
+
+        .top-card {
+            width: 280px;
+            border: 2px solid #3b82f6;
+            background: #eff6ff;
+        }
+
+        /* Icons removed */
+        .card-icon {
+            display: none;
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 800;
+            /* Made bolder */
+            color: #0f172a;
+            /* Made darker (almost black) */
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 1vh;
+            text-align: center;
+        }
+
+        .card-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            color: #0f172a;
+            line-height: 1;
+            margin-bottom: 0.5vh;
+        }
+
+        .card-unit {
+            font-size: 1rem;
+            color: #64748b;
             font-weight: 500;
         }
 
-        .formula {
-            font-size: 0.6em;
-            color: #8899a6;
-            margin-top: 6px;
-            padding-top: 6px;
-            border-top: 1px solid #e1e8ed;
+        .card-formula {
+            font-size: 0.8rem;
+            color: #64748b;
+            /* Slightly darker */
+            margin-top: 0.5vh;
+            border-top: 1px dashed #cbd5e1;
+            padding-top: 0.5vh;
+            width: 100%;
+            text-align: center;
+            font-weight: 500;
         }
 
         .status-badge {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 3px;
-            font-size: 0.6em;
-            font-weight: 700;
+            margin-top: 0.5vh;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 600;
             text-transform: uppercase;
-            letter-spacing: 0.3px;
         }
 
-        .status-idle { background: #657786; color: white; }
-        .status-buying { background: #1da1f2; color: white; }
-        .status-selling { background: #17bf63; color: white; }
-        .status-charging { background: #1da1f2; color: white; }
-        .status-discharging { background: #1da1f2; color: white; }
-        .status-producing { background: #00ba7c; color: white; }
-        .status-active { background: #00ba7c; color: white; }
+        /* Status colors */
+        .badge-idle {
+            background: #f1f5f9;
+            color: #64748b;
+        }
 
-        .timestamp {
+        .badge-buying {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .badge-selling {
+            background: #dcfce7;
+            color: #166534;
+        }
+
+        .badge-producing {
+            background: #dcfce7;
+            color: #15803d;
+        }
+
+        .extras-container {
+            margin-top: 2vh;
+            border-top: 1px solid #e2e8f0;
+            padding-top: 2vh;
+            display: flex;
+            flex-direction: column;
+            gap: 1.5vh;
+        }
+
+        .extras-title {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #64748b;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-left: 4px;
+        }
+
+        .extras-row {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        .mini-card {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            /* Centered since icon is gone */
+            padding: 1.5vh;
+            background: #f8fafc;
+            border-radius: 12px;
+            gap: 12px;
             text-align: center;
-            color: #5a6c7d;
-            font-size: 0.65em;
-            margin-top: 10px;
-            font-weight: 500;
         }
 
-        .loading {
+        .mini-icon {
+            display: none;
+        }
+
+        .mini-content {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+        }
+
+        .mini-label {
+            font-size: 0.85rem;
+            color: #334155;
+            /* Darker grey */
+            font-weight: 700;
+            /* Bolder */
+            text-transform: uppercase;
+            letter-spacing: 0.03em;
+            margin-bottom: 4px;
+        }
+
+        .mini-value {
+            font-size: 1.2rem;
+            font-weight: 800;
+            color: #0f172a;
+        }
+
+        .footer {
             text-align: center;
-            padding: 30px;
-            color: #5a6c7d;
-            font-size: 0.9em;
+            font-size: 0.8rem;
+            color: #94a3b8;
+            margin-top: auto;
         }
 
-        .error {
+        .loading-overlay {
+            position: absolute;
+            inset: 0;
             background: white;
-            color: #e0245e;
-            padding: 16px;
-            border-radius: 8px;
-            border: 2px solid #e0245e;
-            max-width: 500px;
-            margin: 20px auto;
-            font-size: 0.85em;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 50;
+            font-size: 1.1rem;
+            color: #64748b;
         }
 
-        .error strong {
-            display: block;
-            margin-bottom: 6px;
-            font-size: 1em;
+        .hidden {
+            display: none;
         }
     </style>
 </head>
+
 <body>
     <div class="container">
         <div class="header">
             <h1>Soleron Energy Monitor</h1>
-            <div class="status" id="status">Connecting...</div>
+            <div id="status" class="status-pill">Connecting...</div>
         </div>
 
-        <div id="content" class="loading">Loading data...</div>
+        <div class="main-display">
+            <div id="loading" class="loading-overlay">Loading system data...</div>
 
-        <div class="timestamp" id="timestamp"></div>
+            <div class="flow-container">
+                <!-- SVG Lines will be drawn here dynamically or absolutely positioned -->
+                <svg class="lines-layer" id="lines-svg">
+                    <!-- Lines will be injected by JS or CSS -->
+                </svg>
+
+                <div class="top-row">
+                    <div class="data-card top-card" id="card-alajaam">
+                        <div class="card-title">Alajaam</div>
+                        <div class="card-value"><span id="val-alajaam">--</span> <span class="card-unit">kW</span></div>
+                        <div class="card-formula">Consumption + 2 × Car</div>
+                    </div>
+                </div>
+
+                <div class="bottom-row">
+                    <div class="data-card" id="card-solar">
+                        <div class="card-title">Solar</div>
+                        <div class="card-value"><span id="val-solar">--</span> <span class="card-unit">kW</span></div>
+                        <div id="status-solar"></div>
+                    </div>
+
+                    <div class="data-card" id="card-battery">
+                        <div class="card-title">Battery</div>
+                        <div class="card-value"><span id="val-battery">--</span> <span class="card-unit">kW</span></div>
+                        <div class="card-formula">SoC: <span id="val-soc">--</span>%</div>
+                        <div id="status-battery"></div>
+                    </div>
+
+                    <div class="data-card" id="card-aeg">
+                        <div class="card-title">AEG Kilp</div>
+                        <div class="card-value"><span id="val-aeg">--</span> <span class="card-unit">kW</span></div>
+                        <div class="card-formula">Consumption + Car</div>
+                    </div>
+
+                    <div class="data-card" id="card-rapala">
+                        <div class="card-title">Rapala</div>
+                        <div class="card-value"><span id="val-rapala">--</span> <span class="card-unit">kW</span></div>
+                        <div class="card-formula">Car Only</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="extras-container">
+                <div class="extras-title">Algandmed Soleronist</div>
+                <div class="extras-row">
+                    <div class="mini-card">
+                        <div class="mini-content">
+                            <span class="mini-label">mFRR Price</span>
+                            <span class="mini-value" id="val-mfrr">-- €</span>
+                        </div>
+                    </div>
+                    <div class="mini-card">
+                        <div class="mini-content">
+                            <span class="mini-label">Grid Load</span>
+                            <span class="mini-value" id="val-grid">-- kW</span>
+                        </div>
+                    </div>
+                    <div class="mini-card">
+                        <div class="mini-content">
+                            <span class="mini-label">Car Load</span>
+                            <span class="mini-value" id="val-car">-- kW</span>
+                        </div>
+                    </div>
+                    <div class="mini-card">
+                        <div class="mini-content">
+                            <span class="mini-label">Consumption</span>
+                            <span class="mini-value" id="val-consumption">-- kW</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="footer" id="timestamp"></div>
     </div>
 
     <script>
-        let lastUpdate = null;
+        // Update connection lines
+        function updateLines() {
+            const svg = document.getElementById('lines-svg');
+            const topCard = document.querySelector('.top-card');
+            const bottomCards = document.querySelectorAll('.bottom-row .data-card');
 
+            if (!topCard || bottomCards.length === 0) return;
+
+            const containerRect = document.querySelector('.flow-container').getBoundingClientRect();
+            const topRect = topCard.getBoundingClientRect();
+
+            // Calculate start point (bottom center of top card)
+            const x1 = (topRect.left + topRect.width / 2) - containerRect.left;
+            const y1 = (topRect.bottom) - containerRect.top;
+
+            let linesHtml = '';
+
+            bottomCards.forEach(card => {
+                const cardRect = card.getBoundingClientRect();
+                const x2 = (cardRect.left + cardRect.width / 2) - containerRect.left;
+                const y2 = (cardRect.top) - containerRect.top;
+
+                // Drawing direct lines for now as per specific user request "jooned minema alumiste kastideni"
+                linesHtml += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#94a3b8" stroke-width="2" stroke-dasharray="5,5" />`;
+
+                // Add dots at endpoints
+                linesHtml += `<circle cx="${x1}" cy="${y1}" r="4" fill="#3b82f6" />`;
+                linesHtml += `<circle cx="${x2}" cy="${y2}" r="4" fill="#94a3b8" />`;
+            });
+
+            svg.innerHTML = linesHtml;
+        }
+
+        // Handle resize
+        window.addEventListener('resize', updateLines);
+
+        // Data fetching and updates
         async function fetchEnergyData() {
             try {
                 const response = await fetch('/api/energy');
                 const result = await response.json();
 
                 if (result.success) {
-                    updateStatus('online');
-                    displayData(result.data);
-                    lastUpdate = new Date(result.lastUpdate);
-                    updateTimestamp();
+                    updateUI(result.data, result.lastUpdate);
                 } else {
-                    updateStatus('offline');
-                    showError(result.message || 'Failed to fetch data');
+                    document.getElementById('status').className = 'status-pill offline';
+                    document.getElementById('status').textContent = 'Error';
                 }
             } catch (error) {
-                updateStatus('offline');
-                showError('Connection error: ' + error.message);
+                console.error('Fetch error:', error);
+                document.getElementById('status').className = 'status-pill offline';
+                document.getElementById('status').textContent = 'Connection Lost';
             }
         }
 
-        function updateStatus(status) {
-            const statusEl = document.getElementById('status');
-            if (status === 'online') {
-                statusEl.textContent = 'Online';
-                statusEl.className = 'status online';
-            } else {
-                statusEl.textContent = 'Offline';
-                statusEl.className = 'status offline';
-            }
-        }
+        function updateUI(data, lastUpdate) {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('status').className = 'status-pill online';
+            document.getElementById('status').textContent = 'Live'; // 'Online';
 
-        function getStatusClass(status) {
-            if (!status) return 'status-idle';
-            const s = status.toLowerCase();
-            if (s.includes('idle')) return 'status-idle';
-            if (s.includes('buying')) return 'status-buying';
-            if (s.includes('selling')) return 'status-selling';
-            if (s.includes('charging')) return 'status-charging';
-            if (s.includes('discharging')) return 'status-discharging';
-            if (s.includes('producing')) return 'status-producing';
-            if (s.includes('active')) return 'status-active';
-            return 'status-idle';
-        }
-
-        function formatLoad(load) {
-            if (load === null || load === undefined) return 'N/A';
-            return load.toLocaleString() + ' W';
-        }
-
-        function calculateValues(data) {
+            // Calculate derived values
             const carLoad = data.car?.load || 0;
             const consumptionLoad = data.consumption?.load || 0;
+            const alajaamLoad = consumptionLoad + (2 * carLoad);
+            const aegKilpLoad = consumptionLoad + carLoad;
 
-            return {
-                papiniidu: carLoad,
-                aegKilp: consumptionLoad + carLoad,
-                alajaam: consumptionLoad + carLoad + carLoad
-            };
-        }
+            // Formatters
+            const kw = val => (val / 1000).toFixed(1);
+            const curr = val => val?.toFixed(2) || '--';
 
-        function displayData(data) {
-            const contentEl = document.getElementById('content');
+            // Top Card
+            document.getElementById('val-alajaam').textContent = kw(alajaamLoad);
 
-            if (!data) {
-                contentEl.innerHTML = '<div class="loading">No data available</div>';
-                return;
+            // Bottom Cards
+            document.getElementById('val-solar').textContent = data.solar ? kw(data.solar.load) : '--';
+            if (data.solar?.status) {
+                const badge = document.getElementById('status-solar');
+                badge.textContent = data.solar.status;
+                badge.className = `status-badge badge-${data.solar.status.toLowerCase()}`;
             }
 
-            const calc = calculateValues(data);
+            document.getElementById('val-battery').textContent = data.battery ? kw(data.battery.load) : '--';
+            document.getElementById('val-soc').textContent = data.battery?.soc || '--';
+            if (data.battery?.status) {
+                const badge = document.getElementById('status-battery');
+                badge.textContent = data.battery.status;
+                badge.className = `status-badge badge-${data.battery.status.toLowerCase()}`;
+            }
 
-            const html = `
-                <div class="flow-diagram">
-                    <!-- Connection Lines SVG -->
-                    <svg class="connection-lines" viewBox="0 0 100 100" preserveAspectRatio="none">
-                        <line x1="50%" y1="0" x2="12.5%" y2="100" stroke="#5a6c7d" stroke-width="2" opacity="0.5"/>
-                        <line x1="50%" y1="0" x2="37.5%" y2="100" stroke="#5a6c7d" stroke-width="2" opacity="0.5"/>
-                        <line x1="50%" y1="0" x2="62.5%" y2="100" stroke="#5a6c7d" stroke-width="2" opacity="0.5"/>
-                        <line x1="50%" y1="0" x2="87.5%" y2="100" stroke="#5a6c7d" stroke-width="2" opacity="0.5"/>
-                    </svg>
+            document.getElementById('val-aeg').textContent = kw(aegKilpLoad);
+            document.getElementById('val-rapala').textContent = kw(carLoad);
 
-                    <!-- Top Section - Alajaam -->
-                    <div class="top-section">
-                        <div class="card top-card">
-                            <h2>
-                                <div class="card-icon">🏢</div>
-                                Alajaam
-                            </h2>
-                            <div class="data-row">
-                                <div>
-                                    <div class="data-label">Load</div>
-                                    <div class="data-value">
-                                        ${(calc.alajaam / 1000).toFixed(1)}
-                                        <span class="unit">kW</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="formula">Consumption + 2 × Car</div>
-                        </div>
-                    </div>
+            // Extras
+            document.getElementById('val-mfrr').textContent = curr(data.mfrr) + ' €';
+            document.getElementById('val-grid').textContent = (data.grid ? kw(data.grid.load) : '--') + ' kW';
+            document.getElementById('val-car').textContent = (data.car ? kw(data.car.load) : '--') + ' kW';
+            document.getElementById('val-consumption').textContent = (data.consumption ? kw(data.consumption.load) : '--') + ' kW';
 
-                    <!-- Bottom Section - Components -->
-                    <div class="bottom-section">
-                        <!-- Solar Card -->
-                        <div class="card">
-                            <h2>
-                                <div class="card-icon">☀️</div>
-                                Solar
-                            </h2>
-                            <div class="data-row">
-                                <div>
-                                    <div class="data-label">Load</div>
-                                    <div class="data-value">
-                                        ${data.solar?.load !== null ? (data.solar.load / 1000).toFixed(1) : 'N/A'}
-                                        ${data.solar?.load !== null ? '<span class="unit">kW</span>' : ''}
-                                    </div>
-                                </div>
-                            </div>
-                            ${data.solar?.status ? `
-                            <div class="data-row">
-                                <span class="status-badge ${getStatusClass(data.solar.status)}">${data.solar.status}</span>
-                            </div>
-                            ` : ''}
-                        </div>
-
-                        <!-- Battery Card -->
-                        <div class="card">
-                            <h2>
-                                <div class="card-icon">🔋</div>
-                                Battery
-                            </h2>
-                            <div class="data-row">
-                                <div>
-                                    <div class="data-label">Load</div>
-                                    <div class="data-value">
-                                        ${data.battery?.load !== null ? (data.battery.load / 1000).toFixed(1) : 'N/A'}
-                                        ${data.battery?.load !== null ? '<span class="unit">kW</span>' : ''}
-                                    </div>
-                                </div>
-                            </div>
-                            ${data.battery?.soc !== null ? `
-                            <div class="data-row">
-                                <div>
-                                    <div class="data-label">SoC</div>
-                                    <div class="data-value">
-                                        ${data.battery.soc}
-                                        <span class="unit">%</span>
-                                    </div>
-                                </div>
-                            </div>
-                            ` : ''}
-                            ${data.battery?.status ? `
-                            <div class="data-row">
-                                <span class="status-badge ${getStatusClass(data.battery.status)}">${data.battery.status}</span>
-                            </div>
-                            ` : ''}
-                        </div>
-
-                        <!-- AEG Kilp Card -->
-                        <div class="card">
-                            <h2>
-                                <div class="card-icon">⚙️</div>
-                                AEG Kilp
-                            </h2>
-                            <div class="data-row">
-                                <div>
-                                    <div class="data-label">Load</div>
-                                    <div class="data-value">
-                                        ${(calc.aegKilp / 1000).toFixed(1)}
-                                        <span class="unit">kW</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="formula">Consumption + Car</div>
-                        </div>
-
-                        <!-- Rapala + Papiniidu Card -->
-                        <div class="card">
-                            <h2>
-                                <div class="card-icon">🔌</div>
-                                Rapala + Papiniidu 13
-                            </h2>
-                            <div class="data-row">
-                                <div>
-                                    <div class="data-label">Load</div>
-                                    <div class="data-value">
-                                        ${(calc.papiniidu / 1000).toFixed(1)}
-                                        <span class="unit">kW</span>
-                                    </div>
-                                </div>
-                            </div>
-                            <div class="formula">Car</div>
-                        </div>
-                    </div>
-
-                    <!-- Extras Section - mFRR and other data -->
-                    <h3 class="section-title">Algandmed</h3>
-                    <div class="extras-section">
-                        <div class="card">
-                            <h2>
-                                <div class="card-icon">💰</div>
-                                mFRR
-                            </h2>
-                            <div class="data-row">
-                                <div>
-                                    <div class="data-label">Value</div>
-                                    <div class="data-value">
-                                        ${data.mfrr !== null ? data.mfrr.toFixed(2) : 'N/A'}
-                                        ${data.mfrr !== null ? '<span class="unit">€</span>' : ''}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="card">
-                            <h2>
-                                <div class="card-icon">⚡</div>
-                                Grid
-                            </h2>
-                            <div class="data-row">
-                                <div>
-                                    <div class="data-label">Load</div>
-                                    <div class="data-value">
-                                        ${data.grid?.load !== null ? (data.grid.load / 1000).toFixed(1) : 'N/A'}
-                                        ${data.grid?.load !== null ? '<span class="unit">kW</span>' : ''}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="card">
-                            <h2>
-                                <div class="card-icon">🚗</div>
-                                Car
-                            </h2>
-                            <div class="data-row">
-                                <div>
-                                    <div class="data-label">Load</div>
-                                    <div class="data-value">
-                                        ${data.car?.load !== null ? (data.car.load / 1000).toFixed(1) : 'N/A'}
-                                        ${data.car?.load !== null ? '<span class="unit">kW</span>' : ''}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-
-                        <div class="card">
-                            <h2>
-                                <div class="card-icon">📊</div>
-                                Consumption
-                            </h2>
-                            <div class="data-row">
-                                <div>
-                                    <div class="data-label">Load</div>
-                                    <div class="data-value">
-                                        ${data.consumption?.load !== null ? (data.consumption.load / 1000).toFixed(1) : 'N/A'}
-                                        ${data.consumption?.load !== null ? '<span class="unit">kW</span>' : ''}
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            `;
-
-            contentEl.innerHTML = html;
-        }
-
-        function updateTimestamp() {
+            // Timestamp
             if (lastUpdate) {
-                document.getElementById('timestamp').textContent =
-                    'Last updated: ' + lastUpdate.toLocaleString();
+                document.getElementById('timestamp').textContent = 'Last updated: ' + new Date(lastUpdate).toLocaleString();
             }
+
+            // Update lines after data render (in case layout shifts)
+            requestAnimationFrame(updateLines);
         }
 
-        function showError(message) {
-            const contentEl = document.getElementById('content');
-            contentEl.innerHTML = `
-                <div class="error">
-                    <strong>Error:</strong> ${message}
-                </div>
-            `;
-        }
-
-        // Initial fetch
+        // Init
         fetchEnergyData();
-
-        // Auto-refresh every 30 seconds
         setInterval(fetchEnergyData, 30000);
+
+        // Initial line draw check
+        setTimeout(updateLines, 100);
     </script>
 </body>
+
 </html>
