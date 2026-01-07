@@ -13,7 +13,7 @@
 
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background: #f5f7fa;
             min-height: 100vh;
             padding: 20px;
         }
@@ -25,135 +25,216 @@
 
         .header {
             text-align: center;
-            color: white;
+            color: #2c3e50;
             margin-bottom: 30px;
         }
 
         .header h1 {
             font-size: 2.5em;
             margin-bottom: 10px;
+            font-weight: 600;
         }
 
         .status {
             display: inline-block;
             padding: 8px 16px;
-            background: rgba(255,255,255,0.2);
+            background: #e0e0e0;
             border-radius: 20px;
             font-size: 0.9em;
+            color: #666;
+            font-weight: 600;
         }
 
         .status.online {
-            background: rgba(76, 175, 80, 0.3);
+            background: #4caf50;
+            color: white;
         }
 
         .status.offline {
-            background: rgba(244, 67, 54, 0.3);
+            background: #f44336;
+            color: white;
         }
 
-        .grid-container {
+        .flow-diagram {
+            position: relative;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 40px 20px;
+        }
+
+        .top-section {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 80px;
+        }
+
+        .bottom-section {
             display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 30px;
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        .connection-lines {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 1;
+        }
+
+        .extras-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
             gap: 20px;
-            margin-bottom: 20px;
+            max-width: 800px;
+            margin: 40px auto 0;
         }
 
         .card {
             background: white;
-            border-radius: 12px;
-            padding: 24px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            border-radius: 16px;
+            padding: 28px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+            border: 1px solid #e1e8ed;
+            position: relative;
+            z-index: 2;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.12);
+        }
+
+        .card.top-card {
+            min-width: 400px;
+            padding: 36px;
         }
 
         .card h2 {
-            color: #333;
-            margin-bottom: 16px;
-            font-size: 1.3em;
+            color: #5a6c7d;
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            font-weight: 600;
             display: flex;
             align-items: center;
-            gap: 10px;
-        }
-
-        .card-icon {
-            width: 32px;
-            height: 32px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 1.2em;
-        }
-
-        .solar-card .card-icon { background: #ffd54f; }
-        .grid-card .card-icon { background: #64b5f6; }
-        .battery-card .card-icon { background: #81c784; }
-        .car-card .card-icon { background: #ba68c8; }
-        .consumption-card .card-icon { background: #ff8a65; }
-        .mfrr-card .card-icon { background: #4db6ac; }
-
-        .data-row {
-            display: flex;
-            justify-content: space-between;
-            padding: 12px 0;
-            border-bottom: 1px solid #f0f0f0;
-        }
-
-        .data-row:last-child {
-            border-bottom: none;
-        }
-
-        .data-label {
-            font-size: 0.9em;
-            color: #666;
+            gap: 12px;
             text-transform: uppercase;
             letter-spacing: 0.5px;
         }
 
+        .card.top-card h2 {
+            font-size: 1.4em;
+        }
+
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2em;
+        }
+
+        .top-card .card-icon {
+            width: 56px;
+            height: 56px;
+            font-size: 2.5em;
+        }
+
+        .data-row {
+            margin-bottom: 16px;
+        }
+
+        .data-row:last-child {
+            margin-bottom: 0;
+        }
+
+        .data-label {
+            font-size: 0.85em;
+            color: #8899a6;
+            margin-bottom: 6px;
+            font-weight: 500;
+        }
+
         .data-value {
-            font-size: 1.3em;
-            font-weight: bold;
-            color: #333;
+            font-size: 2em;
+            font-weight: 700;
+            color: #14171a;
+            display: flex;
+            align-items: baseline;
+            gap: 8px;
+        }
+
+        .top-card .data-value {
+            font-size: 2.8em;
+        }
+
+        .data-value .unit {
+            font-size: 0.5em;
+            color: #8899a6;
+            font-weight: 500;
+        }
+
+        .formula {
+            font-size: 0.8em;
+            color: #8899a6;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e1e8ed;
         }
 
         .status-badge {
             display: inline-block;
-            padding: 4px 12px;
-            border-radius: 12px;
-            font-size: 0.85em;
-            font-weight: 600;
+            padding: 6px 14px;
+            border-radius: 4px;
+            font-size: 0.75em;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
 
-        .status-idle { background: #e0e0e0; color: #666; }
-        .status-buying { background: #ffcdd2; color: #c62828; }
-        .status-selling { background: #c8e6c9; color: #2e7d32; }
-        .status-charging { background: #fff9c4; color: #f57f17; }
-        .status-discharging { background: #b2dfdb; color: #00695c; }
-        .status-producing { background: #c8e6c9; color: #2e7d32; }
-        .status-active { background: #bbdefb; color: #1565c0; }
+        .status-idle { background: #657786; color: white; }
+        .status-buying { background: #1da1f2; color: white; }
+        .status-selling { background: #17bf63; color: white; }
+        .status-charging { background: #1da1f2; color: white; }
+        .status-discharging { background: #1da1f2; color: white; }
+        .status-producing { background: #00ba7c; color: white; }
+        .status-active { background: #00ba7c; color: white; }
 
         .timestamp {
             text-align: center;
-            color: white;
-            font-size: 0.9em;
-            margin-top: 20px;
-            opacity: 0.9;
+            color: #5a6c7d;
+            font-size: 0.85em;
+            margin-top: 30px;
+            font-weight: 500;
         }
 
         .loading {
             text-align: center;
-            padding: 40px;
-            color: white;
+            padding: 60px;
+            color: #5a6c7d;
+            font-size: 1.1em;
         }
 
         .error {
-            background: #ffebee;
-            color: #c62828;
-            padding: 16px;
-            border-radius: 8px;
-            border-left: 4px solid #c62828;
+            background: white;
+            color: #e0245e;
+            padding: 24px;
+            border-radius: 12px;
+            border: 2px solid #e0245e;
+            max-width: 600px;
+            margin: 40px auto;
         }
 
-        .loading {
-            opacity: 1;
+        .error strong {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 1.1em;
         }
     </style>
 </head>
@@ -221,6 +302,17 @@
             return load.toLocaleString() + ' W';
         }
 
+        function calculateValues(data) {
+            const carLoad = data.car?.load || 0;
+            const consumptionLoad = data.consumption?.load || 0;
+
+            return {
+                papiniidu: carLoad,
+                aegKilp: consumptionLoad + carLoad,
+                alajaam: consumptionLoad + carLoad + carLoad
+            };
+        }
+
         function displayData(data) {
             const contentEl = document.getElementById('content');
 
@@ -229,101 +321,196 @@
                 return;
             }
 
+            const calc = calculateValues(data);
+
             const html = `
-                <div class="grid-container">
-                    <!-- Solar Card -->
-                    <div class="card solar-card">
-                        <h2>
-                            <div class="card-icon">☀️</div>
-                            Solar
-                        </h2>
-                        <div class="data-row">
-                            <span class="data-label">Load</span>
-                            <span class="data-value">${formatLoad(data.solar?.load)}</span>
-                        </div>
-                        <div class="data-row">
-                            <span class="data-label">Status</span>
-                            <span class="status-badge ${getStatusClass(data.solar?.status)}">${data.solar?.status || 'N/A'}</span>
+                <div class="flow-diagram">
+                    <!-- Connection Lines SVG -->
+                    <svg class="connection-lines" viewBox="0 0 1200 400" preserveAspectRatio="xMidYMid meet">
+                        <line x1="600" y1="120" x2="200" y2="300" stroke="#5a6c7d" stroke-width="3" opacity="0.3"/>
+                        <line x1="600" y1="120" x2="450" y2="300" stroke="#5a6c7d" stroke-width="3" opacity="0.3"/>
+                        <line x1="600" y1="120" x2="750" y2="300" stroke="#5a6c7d" stroke-width="3" opacity="0.3"/>
+                        <line x1="600" y1="120" x2="1000" y2="300" stroke="#5a6c7d" stroke-width="3" opacity="0.3"/>
+                    </svg>
+
+                    <!-- Top Section - Alajaam -->
+                    <div class="top-section">
+                        <div class="card top-card">
+                            <h2>
+                                <div class="card-icon">🏢</div>
+                                Alajaam
+                            </h2>
+                            <div class="data-row">
+                                <div>
+                                    <div class="data-label">Load</div>
+                                    <div class="data-value">
+                                        ${(calc.alajaam / 1000).toFixed(1)}
+                                        <span class="unit">kW</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="formula">Consumption + 2 × Car</div>
                         </div>
                     </div>
 
-                    <!-- Grid Card -->
-                    <div class="card grid-card">
-                        <h2>
-                            <div class="card-icon">⚡</div>
-                            Grid
-                        </h2>
-                        <div class="data-row">
-                            <span class="data-label">Load</span>
-                            <span class="data-value">${formatLoad(data.grid?.load)}</span>
+                    <!-- Bottom Section - Components -->
+                    <div class="bottom-section">
+                        <!-- Solar Card -->
+                        <div class="card">
+                            <h2>
+                                <div class="card-icon">☀️</div>
+                                Solar
+                            </h2>
+                            <div class="data-row">
+                                <div>
+                                    <div class="data-label">Load</div>
+                                    <div class="data-value">
+                                        ${data.solar?.load !== null ? (data.solar.load / 1000).toFixed(1) : 'N/A'}
+                                        ${data.solar?.load !== null ? '<span class="unit">kW</span>' : ''}
+                                    </div>
+                                </div>
+                            </div>
+                            ${data.solar?.status ? `
+                            <div class="data-row">
+                                <span class="status-badge ${getStatusClass(data.solar.status)}">${data.solar.status}</span>
+                            </div>
+                            ` : ''}
                         </div>
-                        <div class="data-row">
-                            <span class="data-label">Status</span>
-                            <span class="status-badge ${getStatusClass(data.grid?.status)}">${data.grid?.status || 'N/A'}</span>
+
+                        <!-- Battery Card -->
+                        <div class="card">
+                            <h2>
+                                <div class="card-icon">🔋</div>
+                                Battery
+                            </h2>
+                            <div class="data-row">
+                                <div>
+                                    <div class="data-label">Load</div>
+                                    <div class="data-value">
+                                        ${data.battery?.load !== null ? (data.battery.load / 1000).toFixed(1) : 'N/A'}
+                                        ${data.battery?.load !== null ? '<span class="unit">kW</span>' : ''}
+                                    </div>
+                                </div>
+                            </div>
+                            ${data.battery?.soc !== null ? `
+                            <div class="data-row">
+                                <div>
+                                    <div class="data-label">SoC</div>
+                                    <div class="data-value">
+                                        ${data.battery.soc}
+                                        <span class="unit">%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            ` : ''}
+                            ${data.battery?.status ? `
+                            <div class="data-row">
+                                <span class="status-badge ${getStatusClass(data.battery.status)}">${data.battery.status}</span>
+                            </div>
+                            ` : ''}
+                        </div>
+
+                        <!-- AEG Kilp Card -->
+                        <div class="card">
+                            <h2>
+                                <div class="card-icon">⚙️</div>
+                                AEG Kilp
+                            </h2>
+                            <div class="data-row">
+                                <div>
+                                    <div class="data-label">Load</div>
+                                    <div class="data-value">
+                                        ${(calc.aegKilp / 1000).toFixed(1)}
+                                        <span class="unit">kW</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="formula">Consumption + Car</div>
+                        </div>
+
+                        <!-- Rapala + Papiniidu Card -->
+                        <div class="card">
+                            <h2>
+                                <div class="card-icon">🔌</div>
+                                Rapala + Papiniidu 13
+                            </h2>
+                            <div class="data-row">
+                                <div>
+                                    <div class="data-label">Load</div>
+                                    <div class="data-value">
+                                        ${(calc.papiniidu / 1000).toFixed(1)}
+                                        <span class="unit">kW</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="formula">Car</div>
                         </div>
                     </div>
 
-                    <!-- Battery Card -->
-                    <div class="card battery-card">
-                        <h2>
-                            <div class="card-icon">🔋</div>
-                            Battery
-                        </h2>
-                        <div class="data-row">
-                            <span class="data-label">Load</span>
-                            <span class="data-value">${formatLoad(data.battery?.load)}</span>
+                    <!-- Extras Section - mFRR and other data -->
+                    <div class="extras-section">
+                        <div class="card">
+                            <h2>
+                                <div class="card-icon">💰</div>
+                                mFRR
+                            </h2>
+                            <div class="data-row">
+                                <div>
+                                    <div class="data-label">Value</div>
+                                    <div class="data-value">
+                                        ${data.mfrr !== null ? data.mfrr.toFixed(2) : 'N/A'}
+                                        ${data.mfrr !== null ? '<span class="unit">€</span>' : ''}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="data-row">
-                            <span class="data-label">SoC</span>
-                            <span class="data-value">${data.battery?.soc !== null ? data.battery.soc + '%' : 'N/A'}</span>
-                        </div>
-                        <div class="data-row">
-                            <span class="data-label">Status</span>
-                            <span class="status-badge ${getStatusClass(data.battery?.status)}">${data.battery?.status || 'N/A'}</span>
-                        </div>
-                    </div>
 
-                    <!-- Car Card -->
-                    <div class="card car-card">
-                        <h2>
-                            <div class="card-icon">🚗</div>
-                            Car
-                        </h2>
-                        <div class="data-row">
-                            <span class="data-label">Load</span>
-                            <span class="data-value">${formatLoad(data.car?.load)}</span>
+                        <div class="card">
+                            <h2>
+                                <div class="card-icon">⚡</div>
+                                Grid
+                            </h2>
+                            <div class="data-row">
+                                <div>
+                                    <div class="data-label">Load</div>
+                                    <div class="data-value">
+                                        ${data.grid?.load !== null ? (data.grid.load / 1000).toFixed(1) : 'N/A'}
+                                        ${data.grid?.load !== null ? '<span class="unit">kW</span>' : ''}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="data-row">
-                            <span class="data-label">Status</span>
-                            <span class="status-badge ${getStatusClass(data.car?.status)}">${data.car?.status || 'N/A'}</span>
-                        </div>
-                    </div>
 
-                    <!-- Consumption Card -->
-                    <div class="card consumption-card">
-                        <h2>
-                            <div class="card-icon">📊</div>
-                            Consumption
-                        </h2>
-                        <div class="data-row">
-                            <span class="data-label">Load</span>
-                            <span class="data-value">${formatLoad(data.consumption?.load)}</span>
+                        <div class="card">
+                            <h2>
+                                <div class="card-icon">🚗</div>
+                                Car
+                            </h2>
+                            <div class="data-row">
+                                <div>
+                                    <div class="data-label">Load</div>
+                                    <div class="data-value">
+                                        ${data.car?.load !== null ? (data.car.load / 1000).toFixed(1) : 'N/A'}
+                                        ${data.car?.load !== null ? '<span class="unit">kW</span>' : ''}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
-                        <div class="data-row">
-                            <span class="data-label">Status</span>
-                            <span class="status-badge ${getStatusClass(data.consumption?.status)}">${data.consumption?.status || 'N/A'}</span>
-                        </div>
-                    </div>
 
-                    <!-- mFRR Card -->
-                    <div class="card mfrr-card">
-                        <h2>
-                            <div class="card-icon">💰</div>
-                            mFRR
-                        </h2>
-                        <div class="data-row">
-                            <span class="data-label">Value</span>
-                            <span class="data-value">${data.mfrr !== null ? data.mfrr.toFixed(2) + ' €' : 'N/A'}</span>
+                        <div class="card">
+                            <h2>
+                                <div class="card-icon">📊</div>
+                                Consumption
+                            </h2>
+                            <div class="data-row">
+                                <div>
+                                    <div class="data-label">Load</div>
+                                    <div class="data-value">
+                                        ${data.consumption?.load !== null ? (data.consumption.load / 1000).toFixed(1) : 'N/A'}
+                                        ${data.consumption?.load !== null ? '<span class="unit">kW</span>' : ''}
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
                 </div>
