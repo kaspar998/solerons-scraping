@@ -81,42 +81,58 @@ class SoleronScraper {
   async navigateToPlant() {
     console.log('Navigating to plant 290...');
     console.log('Navigating to plant 290...');
-    try {
-      const targetUrl = 'https://app.soleronenergy.com/#/plants/290';
+    const targetUrl = 'https://app.soleronenergy.com/#/plants/290';
 
-      // If we are already on the plant page, reload it to force data refresh
-      if (this.page.url().includes('plants/290')) {
-        console.log('Already on plant page, reloading to refresh data...');
-        await this.page.reload({
-          waitUntil: 'networkidle2',
-          timeout: 30000
-        });
-      } else {
-        // Otherwise navigate to it
-        await this.page.goto(targetUrl, {
-          waitUntil: 'networkidle2',
-          timeout: 30000
-        }).catch(async (err) => {
-          // If page is detached, create new one and re-login
-          console.log('Page detached, creating new page and re-logging in...');
-          this.page = await this.browser.newPage();
-          await this.page.setViewport({ width: 1920, height: 1080 });
-          this.isLoggedIn = false;
-          await this.login();
-          await this.page.goto(targetUrl, {
-            waitUntil: 'networkidle2',
-            timeout: 30000
-          });
-        });
-      }
+    // Function to check if we are on the correct page
+    const isOnPlantPage = () => this.page.url().includes('plants/290');
 
-      // Wait for page to load (Angular app)
-      await new Promise(resolve => setTimeout(resolve, 5000));
-      console.log('Navigated to plant page');
-    } catch (error) {
-      console.error('Navigation failed:', error.message);
-      throw error;
+    if (isOnPlantPage()) {
+      console.log('Already on plant page, reloading to refresh data...');
+      await this.page.reload({ waitUntil: 'networkidle2', timeout: 30000 });
+    } else {
+      console.log(`Navigating to ${targetUrl}...`);
+      await this.page.goto(targetUrl, { waitUntil: 'networkidle2', timeout: 30000 });
     }
+
+    // Check if we ended up on the correct page or got redirected (e.g. to list)
+    await new Promise(resolve => setTimeout(resolve, 3000)); // Wait for redirects
+
+    if (!isOnPlantPage()) {
+      console.log('Redirected away from plant page. Attempting force navigation...');
+      // Try one more time completely fresh
+      await this.page.goto(targetUrl, { waitUntil: 'networkidle2', timeout: 30000 });
+
+      await new Promise(resolve => setTimeout(resolve, 3000));
+      if (!isOnPlantPage()) {
+        console.log('Still not on plant page. Current URL:', this.page.url());
+        // Fallback: Check for "Lao 8a" link and click it
+        try {
+          const laoLink = await this.page.waitForSelector('a[href*="plants/290"], div:contains("Lao 8a")', { timeout: 5000 });
+          if (laoLink) {
+            console.log('Found link to plant, clicking...');
+            await laoLink.click();
+            await this.page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 20000 });
+          }
+        } catch (e) {
+          console.log('Could not find direct link to plant.');
+        }
+      }
+    }
+
+    // Final check
+    if (!isOnPlantPage()) {
+      throw new Error(`Failed to navigate to plant page. Current URL: ${this.page.url()}`);
+    }
+
+    console.log('Successfully on plant page:', this.page.url());
+
+    // Wait for Angular to load
+    await this.page.waitForFunction(() => {
+      return document.body.innerText.includes('Solar') || document.body.innerText.includes('Grid');
+    }, { timeout: 20000 });
+
+    console.log('Dashboard elements loaded');
+    console.log('Dashboard elements loaded');
   }
 
   async scrapeEnergyFlow() {

@@ -512,19 +512,22 @@
         .flow-up {
             stroke: #22c55e;
             /* Green for producing/discharging up */
-            animation: flowAnimation 1s linear infinite;
+            animation: flowAnimationReverse 1s linear infinite;
+            /* Bottom to Top */
         }
 
         .flow-down {
             stroke: #ef4444;
             /* Red for consumption */
-            animation: flowAnimationReverse 1s linear infinite;
+            animation: flowAnimation 1s linear infinite;
+            /* Top to Bottom */
         }
 
         .flow-charging {
             stroke: #3b82f6;
             /* Blue for charging */
-            animation: flowAnimationReverse 1s linear infinite;
+            animation: flowAnimation 1s linear infinite;
+            /* Top to Bottom */
         }
 
         .flow-idle {
@@ -697,12 +700,10 @@
                             // Since we draw x1->x2 (Top->Bottom), marker-start is Top, marker-end is Bottom.
                         }
                     } else if (type === 'battery') {
-                        if (data.battery) {
-                            if (data.battery.status === 'DISCHARGING') {
-                                lineClass = 'flow-line flow-up';
-                            } else if (data.battery.status === 'CHARGING') {
-                                lineClass = 'flow-line flow-charging';
-                            }
+                        if (data.battery.status === 'DISCHARGING') {
+                            lineClass = 'flow-line flow-up';
+                        } else if (data.battery.status === 'CHARGING') {
+                            lineClass = 'flow-line flow-down'; // Red, down (Charge adds to load)
                         }
                     } else {
                         // Consumers (AEG, Rapala) always flow DOWN
@@ -799,12 +800,22 @@
             const consumptionLoad = data.consumption?.load || 0;
             const solarLoad = data.solar?.load || 0;
             const batteryLoad = data.battery?.load || 0;
+            const batteryStatus = data.battery?.status || 'IDLE';
 
-            // New formula: (Consumption + 2 * Car) - Battery - Solar
-            // Note: We use the raw values. If Solar is producing, it usually comes as positive in some contexts, 
-            // but if Soleron API returns positive for Load, we subtract it.
-            // Adjust sign based on observed data if needed. Assuming 'load' is positive for power.
-            const alajaamLoad = (consumptionLoad + (2 * carLoad)) - batteryLoad - solarLoad;
+            // New formula logic based on battery state
+            // If Charging: Cons + 2*Car + Battery - Solar (Battery is load, adds to grid load)
+            // If Discharging: Cons + 2*Car - Battery - Solar (Battery is source, reduces grid load)
+            let alajaamLoad = (consumptionLoad + (2 * carLoad)) - solarLoad;
+
+            if (batteryStatus === 'CHARGING') {
+                alajaamLoad += batteryLoad;
+                document.querySelector('#card-alajaam .card-formula').textContent = 'Cons + 2×Car + Batt - Solar';
+            } else if (batteryStatus === 'DISCHARGING') {
+                alajaamLoad -= batteryLoad;
+                document.querySelector('#card-alajaam .card-formula').textContent = 'Cons + 2×Car - Batt - Solar';
+            } else {
+                document.querySelector('#card-alajaam .card-formula').textContent = 'Cons + 2×Car - Solar';
+            }
 
             const aegKilpLoad = consumptionLoad + carLoad;
 
