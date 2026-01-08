@@ -300,10 +300,14 @@ class SoleronScraper {
       console.error('Scrape cycle failed:', error.message);
 
       // Try to recover by re-initializing
-      if (error.message.includes('Session') || error.message.includes('login')) {
-        console.log('Attempting to recover session...');
+      if (error.message.includes('Session') || error.message.includes('login') || error.message.includes('navigate')) {
+        console.log('Session or navigation error detected. Restarting browser session...');
         this.isLoggedIn = false;
         await this.close();
+
+        // Wait a bit before retrying
+        await new Promise(resolve => setTimeout(resolve, 5000));
+
         return await this.scrape(); // Retry
       }
 

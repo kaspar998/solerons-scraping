@@ -9,6 +9,8 @@ class Server {
     this.app = express();
     this.scraper = null;
     this.scrapeTimer = null;
+    this.lastActivity = Date.now();
+    this.inactivityTimeout = 5 * 60 * 1000; // 5 minutes
 
     this.setupMiddleware();
     this.setupRoutes();
@@ -31,6 +33,12 @@ class Server {
 
     // API endpoint for energy data
     this.app.get('/api/energy', (req, res) => {
+      // Update activity timestamp
+      this.lastActivity = Date.now();
+
+      // Ensure scraping loop is running
+      this.ensureScrapingLoop();
+
       const data = this.scraper ? this.scraper.getLatestData() : null;
 
       if (!data) {
@@ -49,6 +57,9 @@ class Server {
 
     // API endpoint to trigger manual refresh
     this.app.post('/api/refresh', async (req, res) => {
+      this.lastActivity = Date.now();
+      this.ensureScrapingLoop();
+
       if (!this.scraper) {
         return res.status(503).json({
           error: 'Scraper not initialized'
@@ -81,19 +92,53 @@ class Server {
   }
 
   async initializeScraper(username, password) {
-    console.log('Initializing scraper...');
+    console.log('Initializing scraper instance...');
     this.scraper = new SoleronScraper(username, password);
 
-    // Do initial scrape
-    await this.scraper.scrape();
+    // We don't start the loop here immediately. 
+    // It will be started by the first request or manual trigger.
+    // However, if we want data ready on startup (optional), we could do one scrape.
+    // Let's NOT scrape on startup to save resources until needed, 
+    // OR we can do one initial scrape to have "something" in memory.
+    // Let's do one initial scrape so the server isn't empty.
 
-    // Set up periodic scraping
+    console.log('Performing initial startup scrape...');
+    try {
+      await this.scraper.scrape();
+      console.log('Initial scrape completed.');
+    } catch (e) {
+      console.error('Initial scrape failed (will retry on demand):', e.message);
+    }
+  }
+
+  ensureScrapingLoop() {
+    if (this.scrapeTimer) return; // Already running
+
+    console.log('Starting scraping loop due to activity...');
+
+    // Run immediately if we haven't scraped recently? 
+    // The interval will run AFTER the delay. So if we need immediate data, we rely on the cached data 
+    // or the previous scrape.
+
     this.scrapeTimer = setInterval(async () => {
-      console.log(`\n--- Scraping cycle (every ${this.scrapeInterval/1000}s) ---`);
+      const timeSinceLastActivity = Date.now() - this.lastActivity;
+
+      if (timeSinceLastActivity > this.inactivityTimeout) {
+        console.log(`\nNo activity for ${this.inactivityTimeout / 1000 / 60} minutes. Stopping scraping loop.`);
+        this.stopLoop();
+        return;
+      }
+
+      console.log(`\n--- Scraping cycle (every ${this.scrapeInterval / 1000}s) ---`);
       await this.scraper.scrape();
     }, this.scrapeInterval);
+  }
 
-    console.log(`Scraper initialized. Will scrape every ${this.scrapeInterval/1000} seconds.`);
+  stopLoop() {
+    if (this.scrapeTimer) {
+      clearInterval(this.scrapeTimer);
+      this.scrapeTimer = null;
+    }
   }
 
   start() {
@@ -105,9 +150,7 @@ class Server {
   }
 
   async stop() {
-    if (this.scrapeTimer) {
-      clearInterval(this.scrapeTimer);
-    }
+    this.stopLoop();
     if (this.scraper) {
       await this.scraper.close();
     }
