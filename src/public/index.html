@@ -70,6 +70,59 @@
             color: #991b1b;
         }
 
+        .refresh-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px 16px;
+            background: #3b82f6;
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            margin-left: 10px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .refresh-btn:hover {
+            background: #2563eb;
+            transform: translateY(-1px);
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        .refresh-btn:active {
+            transform: translateY(0);
+        }
+
+        .refresh-btn:disabled {
+            background: #94a3b8;
+            cursor: not-allowed;
+            transform: none;
+        }
+
+        .refresh-btn svg {
+            width: 16px;
+            height: 16px;
+            margin-right: 6px;
+        }
+
+        .refreshing svg {
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            from {
+                transform: rotate(0deg);
+            }
+
+            to {
+                transform: rotate(360deg);
+            }
+        }
+
         .main-display {
             flex: 1;
             display: flex;
@@ -409,6 +462,23 @@
                 padding-top: 10px;
                 gap: 8px;
             }
+
+            .header {
+                flex-wrap: wrap;
+                gap: 10px;
+            }
+
+            .header-actions {
+                display: flex;
+                align-items: center;
+                gap: 8px;
+            }
+
+            .refresh-btn {
+                padding: 6px 12px;
+                font-size: 0.75rem;
+                margin-left: 0;
+            }
         }
     </style>
 </head>
@@ -417,7 +487,16 @@
     <div class="container">
         <div class="header">
             <h1>Soleron Energy Monitor</h1>
-            <div id="status" class="status-pill">Connecting...</div>
+            <div class="header-actions">
+                <div id="status" class="status-pill">Connecting...</div>
+                <button id="refresh-btn" class="refresh-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                    </svg>
+                    Värskenda
+                </button>
+            </div>
         </div>
 
         <div class="main-display">
@@ -554,6 +633,33 @@
                 document.getElementById('status').textContent = 'Connection Lost';
             }
         }
+
+        async function manualRefresh() {
+            const btn = document.getElementById('refresh-btn');
+            btn.disabled = true;
+            btn.classList.add('refreshing');
+
+            try {
+                const response = await fetch('/api/refresh', {
+                    method: 'POST'
+                });
+                const result = await response.json();
+
+                if (result.success) {
+                    updateUI(result.data, result.lastUpdate);
+                } else {
+                    alert('Värskendamine ebaõnnestus: ' + (result.message || 'Tundmatu viga'));
+                }
+            } catch (error) {
+                console.error('Refresh error:', error);
+                alert('Värskendamine ebaõnnestus võrguvea tõttu.');
+            } finally {
+                btn.disabled = false;
+                btn.classList.remove('refreshing');
+            }
+        }
+
+        document.getElementById('refresh-btn').addEventListener('click', manualRefresh);
 
         function updateUI(data, lastUpdate) {
             document.getElementById('loading').classList.add('hidden');

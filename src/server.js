@@ -47,6 +47,33 @@ class Server {
       });
     });
 
+    // API endpoint to trigger manual refresh
+    this.app.post('/api/refresh', async (req, res) => {
+      if (!this.scraper) {
+        return res.status(503).json({
+          error: 'Scraper not initialized'
+        });
+      }
+
+      console.log('\n--- Manual refresh triggered ---');
+      try {
+        await this.scraper.scrape();
+        const data = this.scraper.getLatestData();
+        res.json({
+          success: true,
+          data: data,
+          lastUpdate: data.timestamp
+        });
+      } catch (error) {
+        console.error('Manual refresh failed:', error);
+        res.status(500).json({
+          success: false,
+          error: 'Scrape failed',
+          message: error.message
+        });
+      }
+    });
+
     // Serve dashboard
     this.app.get('/', (req, res) => {
       res.sendFile(path.join(__dirname, 'public', 'index.html'));

@@ -80,23 +80,35 @@ class SoleronScraper {
 
   async navigateToPlant() {
     console.log('Navigating to plant 290...');
+    console.log('Navigating to plant 290...');
     try {
-      // Simply navigate to the URL (reuses existing logged-in page)
-      await this.page.goto('https://app.soleronenergy.com/#/plants/290', {
-        waitUntil: 'networkidle2',
-        timeout: 30000
-      }).catch(async (err) => {
-        // If page is detached, create new one and re-login
-        console.log('Page detached, creating new page and re-logging in...');
-        this.page = await this.browser.newPage();
-        await this.page.setViewport({ width: 1920, height: 1080 });
-        this.isLoggedIn = false;
-        await this.login();
-        await this.page.goto('https://app.soleronenergy.com/#/plants/290', {
+      const targetUrl = 'https://app.soleronenergy.com/#/plants/290';
+
+      // If we are already on the plant page, reload it to force data refresh
+      if (this.page.url().includes('plants/290')) {
+        console.log('Already on plant page, reloading to refresh data...');
+        await this.page.reload({
           waitUntil: 'networkidle2',
           timeout: 30000
         });
-      });
+      } else {
+        // Otherwise navigate to it
+        await this.page.goto(targetUrl, {
+          waitUntil: 'networkidle2',
+          timeout: 30000
+        }).catch(async (err) => {
+          // If page is detached, create new one and re-login
+          console.log('Page detached, creating new page and re-logging in...');
+          this.page = await this.browser.newPage();
+          await this.page.setViewport({ width: 1920, height: 1080 });
+          this.isLoggedIn = false;
+          await this.login();
+          await this.page.goto(targetUrl, {
+            waitUntil: 'networkidle2',
+            timeout: 30000
+          });
+        });
+      }
 
       // Wait for page to load (Angular app)
       await new Promise(resolve => setTimeout(resolve, 5000));
@@ -110,8 +122,15 @@ class SoleronScraper {
   async scrapeEnergyFlow() {
     console.log('Scraping energy flow data...');
     try {
-      // Wait a bit more for Angular to fully render
-      await new Promise(resolve => setTimeout(resolve, 2000));
+      // Wait for Angular to fully render and data to populate
+      try {
+        await this.page.waitForFunction(() => {
+          const text = document.body.innerText || '';
+          return text.includes('Solar') && text.includes('Grid') && text.includes('Load:');
+        }, { timeout: 15000 });
+      } catch (e) {
+        console.log('Timeout waiting for data elements, attempting scrape anyway...');
+      }
 
       const data = await this.page.evaluate(() => {
         const result = {
