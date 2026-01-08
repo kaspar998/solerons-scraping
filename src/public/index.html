@@ -512,7 +512,7 @@
                     <div class="data-card top-card" id="card-alajaam">
                         <div class="card-title">Alajaam</div>
                         <div class="card-value"><span id="val-alajaam">--</span> <span class="card-unit">kW</span></div>
-                        <div class="card-formula">Consumption + 2 × Car</div>
+                        <div class="card-formula">Cons + 2×Car - Solar - Batt</div>
                     </div>
                 </div>
 
@@ -669,7 +669,15 @@
             // Calculate derived values
             const carLoad = data.car?.load || 0;
             const consumptionLoad = data.consumption?.load || 0;
-            const alajaamLoad = consumptionLoad + (2 * carLoad);
+            const solarLoad = data.solar?.load || 0;
+            const batteryLoad = data.battery?.load || 0;
+
+            // New formula: (Consumption + 2 * Car) - Battery - Solar
+            // Note: We use the raw values. If Solar is producing, it usually comes as positive in some contexts, 
+            // but if Soleron API returns positive for Load, we subtract it.
+            // Adjust sign based on observed data if needed. Assuming 'load' is positive for power.
+            const alajaamLoad = (consumptionLoad + (2 * carLoad)) - batteryLoad - solarLoad;
+
             const aegKilpLoad = consumptionLoad + carLoad;
 
             // Formatters

@@ -129,7 +129,13 @@ class SoleronScraper {
           return text.includes('Solar') && text.includes('Grid') && text.includes('Load:');
         }, { timeout: 15000 });
       } catch (e) {
-        console.log('Timeout waiting for data elements, attempting scrape anyway...');
+        console.log('Timeout waiting for data elements, taking screenshot and attempting scrape anyway...');
+        try {
+          await this.page.screenshot({ path: 'debug-scrape-timeout.png' });
+          console.log('Saved debug screenshot to debug-scrape-timeout.png');
+        } catch (err) {
+          console.error('Failed to take screenshot:', err);
+        }
       }
 
       const data = await this.page.evaluate(() => {
