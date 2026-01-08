@@ -480,6 +480,59 @@
                 margin-left: 0;
             }
         }
+
+        /* Flow Animations */
+        @keyframes flowAnimation {
+            from {
+                stroke-dashoffset: 20;
+            }
+
+            to {
+                stroke-dashoffset: 0;
+            }
+        }
+
+        @keyframes flowAnimationReverse {
+            from {
+                stroke-dashoffset: 0;
+            }
+
+            to {
+                stroke-dashoffset: 20;
+            }
+        }
+
+        .flow-line {
+            stroke-dasharray: 10, 10;
+            stroke-width: 3;
+            /* Thicker for visibility */
+            stroke-linecap: round;
+        }
+
+        .flow-up {
+            stroke: #22c55e;
+            /* Green for producing/discharging up */
+            animation: flowAnimation 1s linear infinite;
+        }
+
+        .flow-down {
+            stroke: #ef4444;
+            /* Red for consumption */
+            animation: flowAnimationReverse 1s linear infinite;
+        }
+
+        .flow-charging {
+            stroke: #3b82f6;
+            /* Blue for charging */
+            animation: flowAnimationReverse 1s linear infinite;
+        }
+
+        .flow-idle {
+            stroke: #94a3b8;
+            /* Darker grey for visibility */
+            stroke-dasharray: 5, 5;
+            stroke-width: 2;
+        }
     </style>
 </head>
 
@@ -503,9 +556,24 @@
             <div id="loading" class="loading-overlay">Loading system data...</div>
 
             <div class="flow-container">
-                <!-- SVG Lines will be drawn here dynamically or absolutely positioned -->
+                <!-- SVG Lines Layer -->
                 <svg class="lines-layer" id="lines-svg">
-                    <!-- Lines will be injected by JS or CSS -->
+                    <defs>
+                        <!-- Markers for line ends -->
+                        <marker id="arrow-up" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"
+                            markerUnits="strokeWidth">
+                            <path d="M0,0 L0,6 L9,3 z" fill="#22c55e" />
+                        </marker>
+                        <marker id="arrow-down" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"
+                            markerUnits="strokeWidth">
+                            <path d="M0,0 L0,6 L9,3 z" fill="#ef4444" />
+                        </marker>
+                        <marker id="arrow-charging" markerWidth="10" markerHeight="10" refX="8" refY="3" orient="auto"
+                            markerUnits="strokeWidth">
+                            <path d="M0,0 L0,6 L9,3 z" fill="#3b82f6" />
+                        </marker>
+                    </defs>
+                    <g id="lines-group"></g>
                 </svg>
 
                 <div class="top-row">
@@ -580,40 +648,98 @@
 
     <script>
         // Update connection lines
-        function updateLines() {
+        // Update connection lines
+        function updateLines(data = null) {
             const svg = document.getElementById('lines-svg');
-            const topCard = document.querySelector('.top-card');
-            const bottomCards = document.querySelectorAll('.bottom-row .data-card');
+            const linesGroup = document.getElementById('lines-group');
+            const topCard = document.querySelector('.top-card'); // Alajaam
+            const bottomCards = {
+                solar: document.getElementById('card-solar'),
+                battery: document.getElementById('card-battery'),
+                aeg: document.getElementById('card-aeg'),
+                rapala: document.getElementById('card-rapala')
+            };
 
-            if (!topCard || bottomCards.length === 0) return;
+            if (!topCard || !bottomCards.solar) return;
 
             const containerRect = document.querySelector('.flow-container').getBoundingClientRect();
             const topRect = topCard.getBoundingClientRect();
 
-            // Calculate start point (bottom center of top card)
+            // Calculate start point (bottom center of Alajaam)
             const x1 = (topRect.left + topRect.width / 2) - containerRect.left;
             const y1 = (topRect.bottom) - containerRect.top;
 
             let linesHtml = '';
 
-            bottomCards.forEach(card => {
+            // Helper to draw line
+            const drawLine = (cardId, type, dataObj) => {
+                const card = bottomCards[type];
+                if (!card) return;
+
                 const cardRect = card.getBoundingClientRect();
                 const x2 = (cardRect.left + cardRect.width / 2) - containerRect.left;
                 const y2 = (cardRect.top) - containerRect.top;
 
-                // Drawing direct lines for now as per specific user request "jooned minema alumiste kastideni"
-                linesHtml += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" stroke="#94a3b8" stroke-width="2" stroke-dasharray="5,5" />`;
+                let lineClass = 'flow-line flow-idle';
+                let markerStart = '';
+                let markerEnd = '';
 
-                // Add dots at endpoints
+                if (data) {
+                    if (type === 'solar') {
+                        // Solar always flows UP if producing
+                        if (data.solar && data.solar.load > 0) {
+                            lineClass = 'flow-line flow-up';
+                            markerStart = 'marker-start="url(#arrow-up)"'; // Arrow at bottom pointing up? No, usually marker-end
+                            // SVG markers are tricky with direction. Let's rely on animation direction mostly.
+                            // But if we want arrow at Alajaam:
+                            // marker-end at (x2, y2) would be at bottom card.
+                            // marker-end at (x1, y1) would be at top card.
+                            // Since we draw x1->x2 (Top->Bottom), marker-start is Top, marker-end is Bottom.
+                        }
+                    } else if (type === 'battery') {
+                        if (data.battery) {
+                            if (data.battery.status === 'DISCHARGING') {
+                                lineClass = 'flow-line flow-up';
+                            } else if (data.battery.status === 'CHARGING') {
+                                lineClass = 'flow-line flow-charging';
+                            }
+                        }
+                    } else {
+                        // Consumers (AEG, Rapala) always flow DOWN
+                        // Map card types to data keys: 'aeg' -> consumption, 'rapala' -> car
+                        if (type === 'aeg' && data.consumption && data.consumption.load > 0) {
+                            lineClass = 'flow-line flow-down';
+                        } else if (type === 'rapala' && data.car && data.car.load > 0) {
+                            lineClass = 'flow-line flow-down';
+                        }
+                    }
+                }
+
+                // Draw line from Top (x1, y1) to Bottom (x2, y2)
+                linesHtml += `<line x1="${x1}" y1="${y1}" x2="${x2}" y2="${y2}" class="${lineClass}" />`;
+
+                // Add dots/connector points
                 linesHtml += `<circle cx="${x1}" cy="${y1}" r="4" fill="#3b82f6" />`;
                 linesHtml += `<circle cx="${x2}" cy="${y2}" r="4" fill="#94a3b8" />`;
-            });
+            };
 
-            svg.innerHTML = linesHtml;
+            // Draw all 4 lines
+            drawLine('card-solar', 'solar', data);
+            drawLine('card-battery', 'battery', data);
+            drawLine('card-aeg', 'aeg', data);
+            drawLine('card-rapala', 'rapala', data); // Uses 'rapala' key but check car load inside helper or pass mapped data
+
+            linesGroup.innerHTML = linesHtml;
         }
 
-        // Handle resize
-        window.addEventListener('resize', updateLines);
+        // Handle resize - pass last known data if available, otherwise just redraw structure
+        window.addEventListener('resize', () => {
+            // We need to access the last data to keep animations correct on resize. 
+            // Ideally we store it in a variable.
+            // For now, simple redraw without active flow until next fetch or stored state.
+            const lastData = window.lastEnergyData;
+            updateLines(lastData);
+        });
 
         // Data fetching and updates
         async function fetchEnergyData() {
@@ -622,6 +748,7 @@
                 const result = await response.json();
 
                 if (result.success) {
+                    window.lastEnergyData = result.data;
                     updateUI(result.data, result.lastUpdate);
                 } else {
                     document.getElementById('status').className = 'status-pill offline';
@@ -646,6 +773,7 @@
                 const result = await response.json();
 
                 if (result.success) {
+                    window.lastEnergyData = result.data;
                     updateUI(result.data, result.lastUpdate);
                 } else {
                     alert('Värskendamine ebaõnnestus: ' + (result.message || 'Tundmatu viga'));
@@ -709,6 +837,7 @@
             // Extras
             document.getElementById('val-mfrr').textContent = curr(data.mfrr) + ' €';
             document.getElementById('val-grid').textContent = (data.grid ? kw(data.grid.load) : '--') + ' kW';
+            // Car is now mapped to Rapala card logic mainly, but we show raw car load in extras
             document.getElementById('val-car').textContent = (data.car ? kw(data.car.load) : '--') + ' kW';
             document.getElementById('val-consumption').textContent = (data.consumption ? kw(data.consumption.load) : '--') + ' kW';
 
@@ -717,8 +846,8 @@
                 document.getElementById('timestamp').textContent = 'Last updated: ' + new Date(lastUpdate).toLocaleString();
             }
 
-            // Update lines after data render (in case layout shifts)
-            requestAnimationFrame(updateLines);
+            // Update lines after data render (in case layout shifts) and pass data for animation logic
+            requestAnimationFrame(() => updateLines(data));
         }
 
         // Init
