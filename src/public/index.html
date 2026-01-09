@@ -867,9 +867,37 @@
             requestAnimationFrame(() => updateLines(data));
         }
 
+        // Smart polling with Page Visibility API
+        let pollingInterval = null;
+
+        function startPolling() {
+            if (pollingInterval) return; // Already running
+            console.log('Starting polling...');
+            pollingInterval = setInterval(fetchEnergyData, 30000);
+        }
+
+        function stopPolling() {
+            if (pollingInterval) {
+                console.log('Stopping polling (tab hidden)...');
+                clearInterval(pollingInterval);
+                pollingInterval = null;
+            }
+        }
+
+        // Handle page visibility changes
+        document.addEventListener('visibilitychange', () => {
+            if (document.hidden) {
+                stopPolling();
+            } else {
+                console.log('Tab visible again, resuming...');
+                fetchEnergyData(); // Immediate refresh
+                startPolling();
+            }
+        });
+
         // Init
         fetchEnergyData();
-        setInterval(fetchEnergyData, 30000);
+        startPolling();
 
         // Initial line draw check
         setTimeout(updateLines, 100);

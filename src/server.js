@@ -10,7 +10,7 @@ class Server {
     this.scraper = null;
     this.scrapeTimer = null;
     this.lastActivity = Date.now();
-    this.inactivityTimeout = 5 * 60 * 1000; // 5 minutes
+    this.inactivityTimeout = 30 * 60 * 1000; // 30 minutes
 
     this.setupMiddleware();
     this.setupRoutes();
