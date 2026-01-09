@@ -33,8 +33,13 @@ class Server {
 
     // API endpoint for energy data
     this.app.get('/api/energy', (req, res) => {
+      const now = Date.now();
+      const timeSinceLastActivity = now - this.lastActivity;
+
+      console.log(`[API] /api/energy request - Time since last: ${Math.floor(timeSinceLastActivity / 1000)}s`);
+
       // Update activity timestamp
-      this.lastActivity = Date.now();
+      this.lastActivity = now;
 
       // Ensure scraping loop is running
       this.ensureScrapingLoop();
@@ -122,14 +127,17 @@ class Server {
 
     this.scrapeTimer = setInterval(async () => {
       const timeSinceLastActivity = Date.now() - this.lastActivity;
+      const minutesSinceActivity = Math.floor(timeSinceLastActivity / 1000 / 60);
+
+      console.log(`[LOOP] Check - Time since last activity: ${minutesSinceActivity} min (timeout: ${this.inactivityTimeout / 1000 / 60} min)`);
 
       if (timeSinceLastActivity > this.inactivityTimeout) {
-        console.log(`\nNo activity for ${this.inactivityTimeout / 1000 / 60} minutes. Stopping scraping loop.`);
+        console.log(`[LOOP] STOPPING - No activity for ${minutesSinceActivity} minutes`);
         this.stopLoop();
         return;
       }
 
-      console.log(`\n--- Scraping cycle (every ${this.scrapeInterval / 1000}s) ---`);
+      console.log(`[LOOP] Scraping... (interval: ${this.scrapeInterval / 1000}s)`);
       await this.scraper.scrape();
     }, this.scrapeInterval);
   }
