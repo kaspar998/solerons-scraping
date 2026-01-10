@@ -1249,14 +1249,19 @@
                     else if (data.mfrr.data.data && Array.isArray(data.mfrr.data.data)) {
                         mfrrArray = data.mfrr.data.data;
                     }
+                    // Check if there is a 'timeseries' property (Baltic API standard format)
+                    else if (data.mfrr.data.timeseries && Array.isArray(data.mfrr.data.timeseries)) {
+                        console.log('Found mFRR data in timeseries property');
+                        mfrrArray = data.mfrr.data.timeseries;
+                    }
                     // If it's an object, it might be keyed by the dataset ID (e.g. { "local_marginal_price_mfrr": [...] })
                     else if (typeof data.mfrr.data === 'object' && data.mfrr.data !== null) {
                         const keys = Object.keys(data.mfrr.data);
                         console.log('mFRR.data is an object with keys:', keys);
 
-                        // Try to find the first property that is an array
+                        // Try to find the first property that is an array, skipping 'columns'
                         for (const key of keys) {
-                            if (Array.isArray(data.mfrr.data[key])) {
+                            if (key !== 'columns' && Array.isArray(data.mfrr.data[key])) {
                                 console.log(`Found array in mFRR.data under key: ${key}`);
                                 mfrrArray = data.mfrr.data[key];
                                 break;
@@ -1270,6 +1275,8 @@
             if (!Array.isArray(mfrrArray)) {
                 console.warn('Failed to extract mFRR array, defaulting to empty. Value was:', mfrrArray);
                 mfrrArray = [];
+            } else if (mfrrArray.length > 0) {
+                console.log('First mFRR item structure:', mfrrArray[0]);
             }
 
             const mfrrData = mfrrArray.map(item => ({
