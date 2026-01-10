@@ -1,5 +1,6 @@
 const express = require('express');
 const path = require('path');
+const axios = require('axios');
 const SoleronScraper = require('./scraper');
 
 class Server {
@@ -90,6 +91,49 @@ class Server {
       }
     });
 
+    // API endpoint for price data (mFRR + Nord Pool)
+    this.app.get('/api/prices', async (req, res) => {
+      try {
+        const { start, end, hours = 24 } = req.query;
+
+        // Calculate time range
+        const endDate = end ? new Date(end) : new Date();
+        const startDate = start ? new Date(start) : new Date(endDate.getTime() - hours * 60 * 60 * 1000);
+
+        // Format dates for APIs
+        const formatDateBaltic = (d) => d.toISOString().slice(0, 16).replace('T', 'T');
+        const formatDateElering = (d) => d.toISOString();
+
+        console.log(`[API] /api/prices request - Range: ${startDate.toISOString()} to ${endDate.toISOString()}`);
+
+        // Fetch data from both APIs in parallel
+        const [balticData, eleringData] = await Promise.all([
+          this.fetchBalticPrices(formatDateBaltic(startDate), formatDateBaltic(endDate)),
+          this.fetchEleringPrices(formatDateElering(startDate), formatDateElering(endDate))
+        ]);
+
+        res.json({
+          success: true,
+          data: {
+            mfrr: balticData.mfrr || [],
+            volumes: balticData.volumes || [],
+            nordpool: eleringData || []
+          },
+          range: {
+            start: startDate.toISOString(),
+            end: endDate.toISOString()
+          }
+        });
+      } catch (error) {
+        console.error('Price API error:', error.message);
+        res.status(500).json({
+          success: false,
+          error: 'Failed to fetch price data',
+          message: error.message
+        });
+      }
+    });
+
     // Serve dashboard
     this.app.get('/', (req, res) => {
       res.sendFile(path.join(__dirname, 'public', 'index.html'));
@@ -153,6 +197,62 @@ class Server {
     this.app.listen(this.port, () => {
       console.log(`\nServer running on port ${this.port}`);
     });
+  }
+
+  async fetchBalticPrices(startDate, endDate) {
+    try {
+      const url = 'https://api-baltic.transparency-dashboard.eu/api/v1/export';
+
+      // Fetch mFRR prices
+      const priceResponse = await axios.get(url, {
+        params: {
+          id: 'local_marginal_price_mfrr',
+          start_date: startDate,
+          end_date: endDate,
+          output_time_zone: 'EET',
+          output_format: 'json'
+        },
+        timeout: 10000
+      });
+
+      // Fetch mFRR volumes
+      const volumeResponse = await axios.get(url, {
+        params: {
+          id: 'normal_activations_mfrr',
+          start_date: startDate,
+          end_date: endDate,
+          output_time_zone: 'EET',
+          output_format: 'json'
+        },
+        timeout: 10000
+      });
+
+      return {
+        mfrr: priceResponse.data || [],
+        volumes: volumeResponse.data || []
+      };
+    } catch (error) {
+      console.error('Baltic API error:', error.message);
+      return { mfrr: [], volumes: [] };
+    }
+  }
+
+  async fetchEleringPrices(startDate, endDate) {
+    try {
+      const url = 'https://dashboard.elering.ee/api/nps/price';
+      const response = await axios.get(url, {
+        params: {
+          start: startDate,
+          end: endDate
+        },
+        timeout: 10000
+      });
+
+      return response.data?.data || [];
+    } catch (error) {
+      console.error('Elering API error:', error.message);
+      return [];
+    }
   }
 
   async stop() {
