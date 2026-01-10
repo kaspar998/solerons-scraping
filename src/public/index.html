@@ -542,10 +542,110 @@
             stroke-dasharray: 5, 5;
             stroke-width: 2;
         }
+
+        /* Login Screen */
+        .login-overlay {
+            position: fixed;
+            inset: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 9999;
+            backdrop-filter: blur(10px);
+        }
+
+        .login-overlay.hidden {
+            display: none;
+        }
+
+        .login-box {
+            background: white;
+            padding: 48px;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 90%;
+            text-align: center;
+        }
+
+        .login-box h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 8px;
+        }
+
+        .login-box p {
+            font-size: 0.95rem;
+            color: #64748b;
+            margin-bottom: 32px;
+        }
+
+        .login-input {
+            width: 100%;
+            padding: 14px 18px;
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-family: 'Inter', sans-serif;
+            transition: all 0.2s ease;
+            margin-bottom: 16px;
+        }
+
+        .login-input:focus {
+            outline: none;
+            border-color: #3b82f6;
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        .login-btn:active {
+            transform: translateY(0);
+        }
+
+        .login-error {
+            color: #ef4444;
+            font-size: 0.85rem;
+            margin-top: 12px;
+            display: none;
+        }
+
+        .login-error.show {
+            display: block;
+        }
     </style>
 </head>
 
 <body>
+    <!-- Login Screen -->
+    <div id="login-overlay" class="login-overlay">
+        <div class="login-box">
+            <h2>🔒 Soleron Energy Monitor</h2>
+            <p>Sisesta parool juurdepääsuks</p>
+            <input type="password" id="password-input" class="login-input" placeholder="Parool" autocomplete="off">
+            <button id="login-btn" class="login-btn">Sisene</button>
+            <div id="login-error" class="login-error">Vale parool!</div>
+        </div>
+    </div>
+
     <div class="container">
         <div class="header">
             <h1>Soleron Energy Monitor</h1>
@@ -656,6 +756,48 @@
     </div>
 
     <script>
+        // Login functionality
+        const PASSWORD = 'mfrr';
+        const loginOverlay = document.getElementById('login-overlay');
+        const passwordInput = document.getElementById('password-input');
+        const loginBtn = document.getElementById('login-btn');
+        const loginError = document.getElementById('login-error');
+
+        // Check if already logged in
+        if (sessionStorage.getItem('authenticated') === 'true') {
+            loginOverlay.classList.add('hidden');
+        }
+
+        function attemptLogin() {
+            const enteredPassword = passwordInput.value;
+            if (enteredPassword === PASSWORD) {
+                sessionStorage.setItem('authenticated', 'true');
+                loginOverlay.classList.add('hidden');
+                loginError.classList.remove('show');
+                // Start the app
+                fetchEnergyData();
+                startPolling();
+            } else {
+                loginError.classList.add('show');
+                passwordInput.value = '';
+                passwordInput.focus();
+            }
+        }
+
+        loginBtn.addEventListener('click', attemptLogin);
+        passwordInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                attemptLogin();
+            }
+        });
+
+        // Focus password input on load
+        window.addEventListener('load', () => {
+            if (!sessionStorage.getItem('authenticated')) {
+                passwordInput.focus();
+            }
+        });
+
         // Update connection lines
         // Update connection lines
         function updateLines(data = null) {
@@ -895,9 +1037,11 @@
             }
         });
 
-        // Init
-        fetchEnergyData();
-        startPolling();
+        // Init - only if authenticated
+        if (sessionStorage.getItem('authenticated') === 'true') {
+            fetchEnergyData();
+            startPolling();
+        }
 
         // Initial line draw check
         setTimeout(updateLines, 100);
