@@ -1230,10 +1230,19 @@
                     nordPoolArray = data.nordpool.data;
                 }
             }
-            const nordPoolData = (nordPoolArray || []).map(item => ({
-                x: new Date(item.timestamp).getTime(),
-                y: item.price
-            }));
+            const nordPoolData = (nordPoolArray || []).map(item => {
+                let time = item.timestamp;
+                // Elering API usually returns UNIX timestamp in seconds
+                if (typeof time === 'number' && time < 100000000000) {
+                    time *= 1000;
+                } else {
+                    time = new Date(time).getTime();
+                }
+                return {
+                    x: time,
+                    y: item.price
+                };
+            });
 
             // Extract mFRR data - handle complex API response structures
             let mfrrArray = [];
