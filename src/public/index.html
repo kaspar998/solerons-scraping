@@ -1211,22 +1211,41 @@
         function renderPriceChart(data) {
             const ctx = document.getElementById('priceChart');
 
-            if (!data || (!data.nordpool && !data.mfrr)) {
+            if (!data) {
                 console.log('No chart data available');
                 return;
             }
 
-            // Extract Nord Pool data
-            const nordPoolData = (data.nordpool || []).map(item => ({
+            console.log('Chart data received:', data);
+
+            // Extract Nord Pool data - handle both array and object with data property
+            let nordPoolArray = data.nordpool;
+            if (nordPoolArray && !Array.isArray(nordPoolArray)) {
+                // If it's an object with a data property, use that
+                nordPoolArray = nordPoolArray.data || [];
+            }
+            const nordPoolData = (nordPoolArray || []).map(item => ({
                 x: new Date(item.timestamp).getTime(),
                 y: item.price
             }));
 
-            // Extract mFRR data (use the 'up' or 'down' price depending on availability)
-            const mfrrData = (data.mfrr || []).map(item => ({
+            // Extract mFRR data - handle both array and object responses
+            let mfrrArray = data.mfrr;
+            if (mfrrArray && !Array.isArray(mfrrArray)) {
+                mfrrArray = mfrrArray.data || [];
+            }
+            const mfrrData = (mfrrArray || []).map(item => ({
                 x: new Date(item.start_time || item.timestamp).getTime(),
                 y: item.price_up || item.price_down || item.price || 0
             }));
+
+            console.log('Nord Pool data points:', nordPoolData.length);
+            console.log('mFRR data points:', mfrrData.length);
+
+            if (nordPoolData.length === 0 && mfrrData.length === 0) {
+                console.log('No data points to display');
+                return;
+            }
 
             // Destroy existing chart
             if (priceChart) {
