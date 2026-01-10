@@ -1317,6 +1317,51 @@
             console.log('mFRR Up points:', mfrrUpData.length);
             console.log('mFRR Down points:', mfrrDownData.length);
 
+            // Extract Volumes data
+            let volumesArray = [];
+            if (data.volumes) {
+                if (Array.isArray(data.volumes)) {
+                    volumesArray = data.volumes;
+                } else if (typeof data.volumes === 'object') {
+                    // Try to find timeseries or any array property
+                    if (data.volumes.timeseries && Array.isArray(data.volumes.timeseries)) {
+                        volumesArray = data.volumes.timeseries;
+                    } else if (data.volumes.data && data.volumes.data.timeseries) {
+                        volumesArray = data.volumes.data.timeseries;
+                    } else {
+                        // Scan keys like we did for prices
+                        const vData = data.volumes.data || data.volumes;
+                        if (typeof vData === 'object') {
+                            for (const key of Object.keys(vData)) {
+                                if (key !== 'columns' && Array.isArray(vData[key])) {
+                                    volumesArray = vData[key];
+                                    break;
+                                }
+                            }
+                        }
+                    }
+                }
+            }
+
+            const volumeData = [];
+            volumesArray.forEach(item => {
+                const time = new Date(item.from || item.start_time || item.timestamp).getTime();
+                // Map volume (sum of up and down activations or specific column?)
+                // Usually volumes has columns for Up and Down activations too.
+                // Let's check values array if present.
+                let val = 0;
+                if (item.values && Array.isArray(item.values)) {
+                    // Assuming similar structure: Index 0, 1 etc.
+                    // Sum absolute values to show total activation volume? 
+                    // Or just pick non-zero?
+                    // Let's sum valid numbers in values
+                    val = item.values.reduce((sum, v) => sum + (typeof v === 'number' ? Math.abs(v) : 0), 0);
+                } else {
+                    val = Math.abs(item.quantity || item.volume || 0);
+                }
+                volumeData.push({ x: time, y: val });
+            });
+
             // Destroy existing chart
             if (priceChart) {
                 priceChart.destroy();
@@ -1328,13 +1373,24 @@
                 data: {
                     datasets: [
                         {
+                            label: 'mFRR Mahud (MWh)',
+                            data: volumeData,
+                            type: 'bar',
+                            backgroundColor: 'rgba(100, 116, 139, 0.5)', // Slate/Grey
+                            borderColor: 'rgba(100, 116, 139, 1)',
+                            borderWidth: 1,
+                            yAxisID: 'y1',
+                            order: 2 // Render behind lines
+                        },
+                        {
                             label: 'Nord Pool (€/MWh)',
                             data: nordPoolData,
                             borderColor: '#3b82f6', // Blue
                             backgroundColor: 'rgba(59, 130, 246, 0.1)',
                             borderWidth: 2,
                             tension: 0.1,
-                            yAxisID: 'y'
+                            yAxisID: 'y',
+                            order: 1
                         },
                         {
                             label: 'mFRR Üles (€/MWh)',
@@ -1343,7 +1399,8 @@
                             backgroundColor: 'rgba(239, 68, 68, 0.1)',
                             borderWidth: 2,
                             tension: 0.1,
-                            yAxisID: 'y'
+                            yAxisID: 'y',
+                            order: 1
                         },
                         {
                             label: 'mFRR Alla (€/MWh)',
@@ -1352,7 +1409,8 @@
                             backgroundColor: 'rgba(34, 197, 94, 0.1)',
                             borderWidth: 2,
                             tension: 0.1,
-                            yAxisID: 'y'
+                            yAxisID: 'y',
+                            order: 1
                         }
                     ]
                 },
@@ -1370,29 +1428,17 @@
                             labels: {
                                 usePointStyle: true,
                                 padding: 15,
-                                font: {
-                                    family: 'Inter',
-                                    size: 12,
-                                    weight: '600'
-                                }
+                                font: { family: 'Inter', size: 12, weight: '600' }
                             }
                         },
                         tooltip: {
                             backgroundColor: 'rgba(0, 0, 0, 0.8)',
                             padding: 12,
-                            titleFont: {
-                                size: 13,
-                                weight: '600'
-                            },
-                            bodyFont: {
-                                size: 12
-                            },
+                            titleFont: { size: 13, weight: '600' },
+                            bodyFont: { size: 12 },
                             callbacks: {
                                 title: function (context) {
                                     return new Date(context[0].parsed.x).toLocaleString('et-EE');
-                                },
-                                label: function (context) {
-                                    return `${context.dataset.label}: ${context.parsed.y.toFixed(2)} €/MWh`;
                                 }
                             }
                         }
@@ -1402,33 +1448,33 @@
                             type: 'time',
                             time: {
                                 unit: currentHours <= 24 ? 'hour' : 'day',
-                                displayFormats: {
-                                    hour: 'HH:mm',
-                                    day: 'dd.MM'
-                                }
+                                displayFormats: { hour: 'HH:mm', day: 'dd.MM' },
+                                tooltipFormat: 'dd.MM.yyyy HH:mm'
                             },
-                            grid: {
-                                display: false
-                            },
-                            ticks: {
-                                font: {
-                                    size: 11
-                                }
-                            }
+                            grid: { display: false },
+                            ticks: { font: { size: 11 } }
                         },
                         y: {
-                            beginAtZero: false,
-                            grid: {
-                                color: '#f1f5f9'
+                            type: 'linear',
+                            display: true,
+                            position: 'left',
+                            title: {
+                                display: true,
+                                text: 'Hind (€/MWh)'
                             },
-                            ticks: {
-                                callback: function (value) {
-                                    return value.toFixed(0) + ' €';
-                                },
-                                font: {
-                                    size: 11
-                                }
-                            }
+                            grid: { color: '#f1f5f9' },
+                            ticks: { font: { size: 11 } }
+                        },
+                        y1: {
+                            type: 'linear',
+                            display: true,
+                            position: 'right',
+                            title: {
+                                display: true,
+                                text: 'Maht (MWh)'
+                            },
+                            grid: { display: false }, // No grid for secondary axis to avoid clutter
+                            min: 0
                         }
                     }
                 }
