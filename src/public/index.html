@@ -1218,21 +1218,34 @@
 
             console.log('Chart data received:', data);
 
-            // Extract Nord Pool data - handle both array and object with data property
-            let nordPoolArray = data.nordpool;
-            if (nordPoolArray && !Array.isArray(nordPoolArray)) {
-                // If it's an object with a data property, use that
-                nordPoolArray = nordPoolArray.data || [];
+            // Extract Nord Pool data for Estonia
+            let nordPoolArray = [];
+            if (data.nordpool) {
+                if (Array.isArray(data.nordpool)) {
+                    nordPoolArray = data.nordpool;
+                } else if (data.nordpool.ee) {
+                    // Elering API returns {ee: [...], fi: [...], lv: [...], lt: [...]}
+                    nordPoolArray = data.nordpool.ee;
+                } else if (data.nordpool.data) {
+                    nordPoolArray = data.nordpool.data;
+                }
             }
             const nordPoolData = (nordPoolArray || []).map(item => ({
                 x: new Date(item.timestamp).getTime(),
                 y: item.price
             }));
 
-            // Extract mFRR data - handle both array and object responses
-            let mfrrArray = data.mfrr;
-            if (mfrrArray && !Array.isArray(mfrrArray)) {
-                mfrrArray = mfrrArray.data || [];
+            // Extract mFRR data - Baltic API returns {error: false, message: null, data: {data: [...]}}
+            let mfrrArray = [];
+            if (data.mfrr) {
+                if (Array.isArray(data.mfrr)) {
+                    mfrrArray = data.mfrr;
+                } else if (data.mfrr.data && data.mfrr.data.data) {
+                    // Baltic API nested structure
+                    mfrrArray = data.mfrr.data.data;
+                } else if (data.mfrr.data) {
+                    mfrrArray = data.mfrr.data;
+                }
             }
             const mfrrData = (mfrrArray || []).map(item => ({
                 x: new Date(item.start_time || item.timestamp).getTime(),
