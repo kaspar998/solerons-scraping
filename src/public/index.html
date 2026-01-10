@@ -1279,18 +1279,32 @@
                 console.log('First mFRR item structure:', mfrrArray[0]);
             }
 
-            const mfrrData = mfrrArray.map(item => ({
-                x: new Date(item.start_time || item.timestamp).getTime(),
-                y: item.price_up || item.price_down || item.price || 0
-            }));
+            // Extract mFRR data arrays
+            const mfrrUpData = [];
+            const mfrrDownData = [];
 
-            console.log('Nord Pool data points:', nordPoolData.length);
-            console.log('mFRR data points:', mfrrData.length);
+            mfrrArray.forEach(item => {
+                const time = new Date(item.from || item.start_time || item.timestamp).getTime();
 
-            if (nordPoolData.length === 0 && mfrrData.length === 0) {
-                console.log('No data points to display');
-                return;
-            }
+                // If using 'values' array (Baltic API new format)
+                if (item.values && Array.isArray(item.values)) {
+                    // Index 0 = Estonia Upward, Index 1 = Estonia Downward
+                    // We treat explicit null/undefined as no-data, but 0 is a valid price
+                    if (item.values[0] !== null) mfrrUpData.push({ x: time, y: item.values[0] });
+                    if (item.values[1] !== null) mfrrDownData.push({ x: time, y: item.values[1] });
+                }
+                // Fallback for flat structure if API changes
+                else {
+                    const priceUp = item.price_up || item.price || 0;
+                    const priceDown = item.price_down || item.price || 0;
+                    mfrrUpData.push({ x: time, y: priceUp });
+                    mfrrDownData.push({ x: time, y: priceDown });
+                }
+            });
+
+            console.log('Nord Pool points:', nordPoolData.length);
+            console.log('mFRR Up points:', mfrrUpData.length);
+            console.log('mFRR Down points:', mfrrDownData.length);
 
             // Destroy existing chart
             if (priceChart) {
@@ -1305,21 +1319,28 @@
                         {
                             label: 'Nord Pool (€/MWh)',
                             data: nordPoolData,
-                            borderColor: '#3b82f6',
+                            borderColor: '#3b82f6', // Blue
                             backgroundColor: 'rgba(59, 130, 246, 0.1)',
                             borderWidth: 2,
-                            tension: 0.3,
-                            fill: true,
+                            tension: 0.1,
                             yAxisID: 'y'
                         },
                         {
-                            label: 'mFRR (€/MWh)',
-                            data: mfrrData,
-                            borderColor: '#ef4444',
+                            label: 'mFRR Üles (€/MWh)',
+                            data: mfrrUpData,
+                            borderColor: '#ef4444', // Red
                             backgroundColor: 'rgba(239, 68, 68, 0.1)',
                             borderWidth: 2,
-                            tension: 0.3,
-                            fill: true,
+                            tension: 0.1,
+                            yAxisID: 'y'
+                        },
+                        {
+                            label: 'mFRR Alla (€/MWh)',
+                            data: mfrrDownData,
+                            borderColor: '#22c55e', // Green
+                            backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                            borderWidth: 2,
+                            tension: 0.1,
                             yAxisID: 'y'
                         }
                     ]
