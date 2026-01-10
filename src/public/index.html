@@ -1346,21 +1346,25 @@
             const volumeData = [];
             volumesArray.forEach(item => {
                 const time = new Date(item.from || item.start_time || item.timestamp).getTime();
-                // Map volume (sum of up and down activations or specific column?)
-                // Usually volumes has columns for Up and Down activations too.
-                // Let's check values array if present.
                 let val = 0;
                 if (item.values && Array.isArray(item.values)) {
-                    // Assuming similar structure: Index 0, 1 etc.
-                    // Sum absolute values to show total activation volume? 
-                    // Or just pick non-zero?
-                    // Let's sum valid numbers in values
-                    val = item.values.reduce((sum, v) => sum + (typeof v === 'number' ? Math.abs(v) : 0), 0);
+                    // Based on API Columns: Index 2 = Estonia Upward, Index 3 = Estonia Downward
+                    // We sum the absolute values of both directions for total activation volume
+                    const estUp = item.values[2];
+                    const estDown = item.values[3];
+
+                    // Treat null as 0
+                    val = (typeof estUp === 'number' ? Math.abs(estUp) : 0) +
+                        (typeof estDown === 'number' ? Math.abs(estDown) : 0);
                 } else {
                     val = Math.abs(item.quantity || item.volume || 0);
                 }
                 volumeData.push({ x: time, y: val });
             });
+
+            const nonZeroVolumes = volumeData.filter(d => d.y > 0).length;
+            console.log('mFRR Volume points:', volumeData.length);
+            console.log('Non-zero volume points:', nonZeroVolumes);
 
             // Destroy existing chart
             if (priceChart) {
