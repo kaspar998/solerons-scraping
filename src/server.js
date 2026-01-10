@@ -19,6 +19,21 @@ class Server {
   setupMiddleware() {
     this.app.use(express.json());
     this.app.use(express.static(path.join(__dirname, 'public')));
+
+    // API key middleware - protect all /api/* endpoints
+    this.app.use('/api/*', (req, res, next) => {
+      const apiKey = req.headers.authorization || req.query.key;
+      const validKey = 'mfrr';
+
+      if (apiKey !== validKey) {
+        return res.status(401).json({
+          error: 'Unauthorized',
+          message: 'Invalid or missing API key'
+        });
+      }
+
+      next();
+    });
   }
 
   setupRoutes() {
