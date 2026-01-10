@@ -1233,19 +1233,46 @@
                 y: item.price
             }));
 
-            // Extract mFRR data - Baltic API returns {error: false, message: null, data: {data: [...]}}
+            // Extract mFRR data - handle complex API response structures
             let mfrrArray = [];
+            console.log('Inspecting mFRR raw data:', data.mfrr);
+
             if (data.mfrr) {
                 if (Array.isArray(data.mfrr)) {
                     mfrrArray = data.mfrr;
-                } else if (data.mfrr.data && data.mfrr.data.data) {
-                    // Baltic API nested structure
-                    mfrrArray = data.mfrr.data.data;
                 } else if (data.mfrr.data) {
-                    mfrrArray = data.mfrr.data;
+                    // Check if data.mfrr.data is the array
+                    if (Array.isArray(data.mfrr.data)) {
+                        mfrrArray = data.mfrr.data;
+                    }
+                    // Check deeply nested data.mfrr.data.data
+                    else if (data.mfrr.data.data && Array.isArray(data.mfrr.data.data)) {
+                        mfrrArray = data.mfrr.data.data;
+                    }
+                    // If it's an object, it might be keyed by the dataset ID (e.g. { "local_marginal_price_mfrr": [...] })
+                    else if (typeof data.mfrr.data === 'object' && data.mfrr.data !== null) {
+                        const keys = Object.keys(data.mfrr.data);
+                        console.log('mFRR.data is an object with keys:', keys);
+
+                        // Try to find the first property that is an array
+                        for (const key of keys) {
+                            if (Array.isArray(data.mfrr.data[key])) {
+                                console.log(`Found array in mFRR.data under key: ${key}`);
+                                mfrrArray = data.mfrr.data[key];
+                                break;
+                            }
+                        }
+                    }
                 }
             }
-            const mfrrData = (mfrrArray || []).map(item => ({
+
+            // Fallback to empty array if extraction failed to produce an array
+            if (!Array.isArray(mfrrArray)) {
+                console.warn('Failed to extract mFRR array, defaulting to empty. Value was:', mfrrArray);
+                mfrrArray = [];
+            }
+
+            const mfrrData = mfrrArray.map(item => ({
                 x: new Date(item.start_time || item.timestamp).getTime(),
                 y: item.price_up || item.price_down || item.price || 0
             }));
