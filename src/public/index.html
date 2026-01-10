@@ -777,6 +777,8 @@
                 // Start the app
                 fetchEnergyData();
                 startPolling();
+                // Start inactivity timer
+                resetInactivityTimer();
             } else {
                 loginError.classList.add('show');
                 passwordInput.value = '';
@@ -797,6 +799,41 @@
                 passwordInput.focus();
             }
         });
+
+        // Auto-logout after 30 minutes of inactivity
+        let inactivityTimer = null;
+        const INACTIVITY_TIMEOUT = 30 * 60 * 1000; // 30 minutes in milliseconds
+
+        function resetInactivityTimer() {
+            // Only reset if user is authenticated
+            if (sessionStorage.getItem('authenticated') !== 'true') return;
+
+            // Clear existing timer
+            if (inactivityTimer) {
+                clearTimeout(inactivityTimer);
+            }
+
+            // Set new timer
+            inactivityTimer = setTimeout(() => {
+                console.log('Auto-logout due to inactivity');
+                sessionStorage.removeItem('authenticated');
+                loginOverlay.classList.remove('hidden');
+                stopPolling();
+                passwordInput.value = '';
+                passwordInput.focus();
+            }, INACTIVITY_TIMEOUT);
+        }
+
+        // Track user activity events (desktop and mobile)
+        const activityEvents = ['mousedown', 'mousemove', 'keypress', 'scroll', 'touchstart', 'touchmove', 'click'];
+        activityEvents.forEach(event => {
+            document.addEventListener(event, resetInactivityTimer, true);
+        });
+
+        // Start inactivity timer if already authenticated
+        if (sessionStorage.getItem('authenticated') === 'true') {
+            resetInactivityTimer();
+        }
 
         // Update connection lines
         // Update connection lines
