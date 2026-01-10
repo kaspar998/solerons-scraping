@@ -17,8 +17,9 @@
         body {
             font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
             background: #f0f2f5;
-            height: 100vh;
-            overflow: hidden;
+            min-height: 100vh;
+            overflow-y: auto;
+            overflow-x: hidden;
             display: flex;
             flex-direction: column;
             color: #1a1a1a;
@@ -635,7 +636,9 @@
 
         /* Price Chart Section */
         .chart-section {
-            margin-top: 2vh;
+            margin: 2vh auto 0;
+            max-width: 1200px;
+            width: 100%;
             background: white;
             border-radius: 24px;
             box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
@@ -839,20 +842,20 @@
         </div>
 
         <div class="footer" id="timestamp"></div>
+    </div>
 
-        <!-- Price Chart Section -->
-        <div class="chart-section" id="chart-section">
-            <div class="chart-header">
-                <div class="chart-title">📊 Hinnad ja Kogused</div>
-                <div class="time-range-buttons">
-                    <button class="time-btn active" data-hours="24">24h</button>
-                    <button class="time-btn" data-hours="168">7 päeva</button>
-                    <button class="time-btn" data-hours="720">30 päeva</button>
-                </div>
+    <!-- Price Chart Section -->
+    <div class="chart-section" id="chart-section">
+        <div class="chart-header">
+            <div class="chart-title">📊 Hinnad ja Kogused</div>
+            <div class="time-range-buttons">
+                <button class="time-btn active" data-hours="24">24h</button>
+                <button class="time-btn" data-hours="168">7 päeva</button>
+                <button class="time-btn" data-hours="720">30 päeva</button>
             </div>
-            <div class="chart-container">
-                <canvas id="priceChart"></canvas>
-            </div>
+        </div>
+        <div class="chart-container">
+            <canvas id="priceChart"></canvas>
         </div>
     </div>
 
