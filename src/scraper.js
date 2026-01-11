@@ -49,26 +49,63 @@ class SoleronScraper {
       await passwordInput.type(this.password);
       console.log('Password entered');
 
-      console.log('Pressing Enter to submit...');
+      console.log('Password entered. Looking for submit button...');
 
-      // Press Enter to submit form and wait for navigation
-      await Promise.all([
-        this.page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 30000 }),
-        passwordInput.press('Enter')
-      ]);
+      // Try to find the specific primary submit button (avoiding tabs)
+      // Amplify uses .amplify-button--primary for the actual submit
+      let submitButton = await this.page.$('button[type="submit"].amplify-button--primary');
 
-      console.log('Navigation after login completed');
+      if (!submitButton) {
+        console.log('Primary Amplify button not found, looking for generic submit...');
+        // Fallback
+        submitButton = await this.page.$('button[type="submit"]:not([role="tab"])');
+      }
+
+      if (submitButton) {
+        console.log('Submit button found, clicking...');
+        await submitButton.click();
+        // Wait for URL to change or login form to disappear
+        console.log('Waiting for login to complete (URL change or dashboard)...');
+        try {
+          await this.page.waitForFunction(() => {
+            return !window.location.href.includes('login') && !window.location.href.includes('signin');
+          }, { timeout: 30000 });
+        } catch (e) {
+          console.log('Wait for URL change timed out, checking if we are redirected anyway...');
+        }
+      } else {
+        console.log('Submit button not found, falling back to Enter...');
+        await passwordInput.press('Enter');
+        try {
+          await this.page.waitForFunction(() => {
+            return !window.location.href.includes('login') && !window.location.href.includes('signin');
+          }, { timeout: 30000 });
+        } catch (e) {
+          console.log('Wait for URL change timed out...');
+        }
+      }
+
+      console.log('Login action completed, checking status...');
 
       // Wait for Angular to render
       await new Promise(resolve => setTimeout(resolve, 3000));
 
+      // Verify login by checking if password field is gone
+      try {
+        await this.page.waitForSelector('input[type="password"]', { hidden: true, timeout: 5000 });
+        console.log('Password field gone, assuming login success.');
+      } catch (e) {
+        console.log('Password field still present.');
+        const text = await this.page.evaluate(() => document.body.innerText);
+        if (text.includes('Invalid email') || text.includes('Wrong password') || text.includes('Error')) {
+          throw new Error('Login failed: Invalid credentials or error message displayed.');
+        }
+        // If we are at /#/ and input is present, we failed.
+        throw new Error('Login failed: Stayed on login page (password input visible).');
+      }
+
       const currentUrl = this.page.url();
       console.log('Current URL:', currentUrl);
-
-      // Simple check: if URL doesn't contain login/signin, we're probably logged in
-      if (currentUrl.includes('login') || currentUrl.includes('signin')) {
-        throw new Error('Login failed - still on login page. Check credentials.');
-      }
 
       this.isLoggedIn = true;
       console.log('Login successful!');
@@ -79,60 +116,57 @@ class SoleronScraper {
   }
 
   async navigateToPlant() {
-    console.log('Navigating to plant 290...');
-    console.log('Navigating to plant 290...');
-    const targetUrl = 'https://app.soleronenergy.com/#/plants/290';
+    console.log('Navigating to plant list...');
+    await this.page.goto('https://app.soleronenergy.com/#/plants', { waitUntil: 'networkidle2', timeout: 30000 });
 
-    // Function to check if we are on the correct page
-    const isOnPlantPage = () => this.page.url().includes('plants/290');
+    console.log('Waiting for plant list "Lao 8a"...');
+    try {
+      // Wait for element containing text "Lao 8a"
+      await this.page.waitForFunction(() => {
+        const elements = Array.from(document.querySelectorAll('*'));
+        return elements.some(el => el.innerText && el.innerText.includes('Lao 8a'));
+      }, { timeout: 15000 });
 
-    if (isOnPlantPage()) {
-      console.log('Already on plant page, reloading to refresh data...');
-      await this.page.reload({ waitUntil: 'networkidle2', timeout: 30000 });
-    } else {
-      console.log(`Navigating to ${targetUrl}...`);
-      await this.page.goto(targetUrl, { waitUntil: 'networkidle2', timeout: 30000 });
-    }
+      console.log('Found "Lao 8a" text, finding element to click...');
 
-    // Check if we ended up on the correct page or got redirected (e.g. to list)
-    await new Promise(resolve => setTimeout(resolve, 3000)); // Wait for redirects
+      const link = await this.page.evaluateHandle(() => {
+        const elements = Array.from(document.querySelectorAll('a, div, td, span'));
+        // prioritization: link > div
+        return elements.find(el => el.innerText && el.innerText.trim() === 'Lao 8a') ||
+          elements.find(el => el.innerText && el.innerText.includes('Lao 8a'));
+      });
 
-    if (!isOnPlantPage()) {
-      console.log('Redirected away from plant page. Attempting force navigation...');
-      // Try one more time completely fresh
-      await this.page.goto(targetUrl, { waitUntil: 'networkidle2', timeout: 30000 });
-
-      await new Promise(resolve => setTimeout(resolve, 3000));
-      if (!isOnPlantPage()) {
-        console.log('Still not on plant page. Current URL:', this.page.url());
-        // Fallback: Check for "Lao 8a" link and click it
-        try {
-          const laoLink = await this.page.waitForSelector('a[href*="plants/290"], div:contains("Lao 8a")', { timeout: 5000 });
-          if (laoLink) {
-            console.log('Found link to plant, clicking...');
-            await laoLink.click();
-            await this.page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 20000 });
-          }
-        } catch (e) {
-          console.log('Could not find direct link to plant.');
-        }
+      if (link) {
+        console.log('Found element, clicking...');
+        await link.click();
+        // Wait for dashboard to load (look for "Solar" or "Grid")
+        await this.page.waitForFunction(() => {
+          const text = document.body.innerText;
+          return text.includes('Solar') || text.includes('Grid');
+        }, { timeout: 15000 });
+        console.log('Dashboard elements loaded via list navigation');
+      } else {
+        throw new Error('Link "Lao 8a" not found after wait');
       }
+    } catch (e) {
+      console.error('Navigation via list failed:', e.message);
+      console.log('Attempting fallback deep link...');
+      // Fallback to old method just in case
+      await this.page.goto('https://app.soleronenergy.com/#/plants/290', { waitUntil: 'networkidle2' });
     }
 
     // Final check
-    if (!isOnPlantPage()) {
+    const onPage = await this.page.evaluate(() => {
+      const text = document.body.innerText;
+      return text.includes('Solar') || text.includes('Grid');
+    });
+
+    if (!onPage) {
+      console.log('Not on dashboard yet. Current URL:', this.page.url());
       throw new Error(`Failed to navigate to plant page. Current URL: ${this.page.url()}`);
     }
 
     console.log('Successfully on plant page:', this.page.url());
-
-    // Wait for Angular to load
-    await this.page.waitForFunction(() => {
-      return document.body.innerText.includes('Solar') || document.body.innerText.includes('Grid');
-    }, { timeout: 20000 });
-
-    console.log('Dashboard elements loaded');
-    console.log('Dashboard elements loaded');
   }
 
   async scrapeEnergyFlow() {
